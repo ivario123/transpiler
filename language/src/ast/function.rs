@@ -29,25 +29,41 @@ pub struct FunctionCall {
 pub enum Intrinsic {
     ZeroExtend(ZeroExtend),
     SignExtend(SignExtend),
-    ConditionalJump(ConditionalJump),
     SetNFlag(SetNFlag),
     SetZFlag(SetZFlag),
     LocalAddress(LocalAddress),
+    SetVFlag(SetVFlag),
+    SetCFlag(SetCFlag),
+    Flag(Flag),
+    Ror(Ror),
+    Sra(Sra),
 }
 
 // ===============================================
 //              Defintion of intrinsics
 // ===============================================
+
+#[derive(Debug, Clone)]
+pub struct Jump {
+    pub target: Ident,
+    pub condtion: Option<Expr>,
+}
+
 #[derive(Debug, Clone)]
 pub struct ZeroExtend {
     pub operand: Operand,
-    pub bits: Ident,
+    pub bits: Expr,
 }
 
 #[derive(Debug, Clone)]
 pub struct SignExtend {
     pub operand: Operand,
-    pub bits: Ident,
+    pub bits: Expr,
+}
+
+#[derive(Debug, Clone)]
+pub struct Flag {
+    pub name: Lit,
 }
 
 #[derive(Debug, Clone)]
@@ -70,4 +86,32 @@ pub struct SetNFlag {
 #[derive(Debug, Clone)]
 pub struct SetZFlag {
     pub operand: Operand,
+}
+
+#[derive(Debug, Clone)]
+pub struct SetCFlag {
+    pub operand1: Operand,
+    pub operand2: Operand,
+    pub sub: Lit,
+    pub carry: Lit,
+}
+
+#[derive(Debug, Clone)]
+pub struct SetVFlag {
+    pub operand1: Operand,
+    pub operand2: Operand,
+    pub sub: Lit,
+    pub carry: Lit,
+}
+
+#[derive(Debug, Clone)]
+pub struct Ror {
+    pub operand: Operand,
+    pub n: Expr,
+}
+
+#[derive(Debug, Clone)]
+pub struct Sra {
+    pub operand: Operand,
+    pub n: Expr,
 }

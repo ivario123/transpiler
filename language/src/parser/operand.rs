@@ -136,6 +136,12 @@ impl Parse for Operand {
             input.advance_to(&speculative);
             return Ok(Self::Ident(val));
         }
+
+        // let speculative = input.fork();
+        // if let Ok(val) = speculative.parse() {
+        //     input.advance_to(&speculative);
+        //     return Ok(Self::IRExpr(val));
+        // }
         Err(input.error("Expected operand"))
     }
 }

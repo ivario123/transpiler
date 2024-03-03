@@ -29,10 +29,13 @@ impl Into<TokenStream> for IR {
                 #(#ext;)*
             ),
             None => quote!(
-                let ret =  Vec::new();
-                #(let #declerations =
-                  Operand::Local(#declaration_strings.to_owned());)*
-                #(#ext;)*
+                {
+                    let mut ret =  Vec::new();
+                    #(let #declerations =
+                      Operand::Local(#declaration_strings.to_owned());)*
+                    #(#ext;)*
+                    ret
+                }
             ),
         }
         .into()
@@ -47,6 +50,7 @@ impl Compile for IRExpr {
             Self::UnOp(unop) => unop.compile(state),
             Self::BinOp(binop) => binop.compile(state),
             Self::Function(f) => f.compile(state),
+            Self::Jump(j) => j.compile(state),                
         }
     }
 }
@@ -128,7 +132,7 @@ impl Compile for (Ident, RustSyntax) {
                 #ret.extend([
                     #(#to_insert_above,)*
                     #(#ext,)*
-                ]);
+                ])
                 )
             }
             RustSyntax::RustExpr(_) => todo!(),

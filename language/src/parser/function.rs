@@ -1,8 +1,8 @@
 use crate::ast::{function::*, operand::Operand};
+use quote::quote;
 use syn::{
-    parse::discouraged::Speculative,
-    parse::{Parse, ParseStream, Result},
-    Expr, Ident, Lit, Token,
+    parse::{discouraged::Speculative, Parse, ParseStream, Result},
+    parse_macro_input, Expr, Ident, Lit, LitStr, Token,
 };
 impl Parse for Function {
     fn parse(input: ParseStream) -> Result<Self> {
@@ -29,6 +29,12 @@ impl Parse for Intrinsic {
         let speculative = input.fork();
         if let Ok(el) = speculative.parse() {
             input.advance_to(&speculative);
+            return Ok(Self::Flag(el));
+        }
+
+        let speculative = input.fork();
+        if let Ok(el) = speculative.parse() {
+            input.advance_to(&speculative);
             return Ok(Self::ZeroExtend(el));
         }
         let speculative = input.fork();
@@ -40,14 +46,33 @@ impl Parse for Intrinsic {
         let speculative = input.fork();
         if let Ok(el) = speculative.parse() {
             input.advance_to(&speculative);
-            return Ok(Self::ConditionalJump(el));
+            return Ok(Self::SetNFlag(el));
         }
 
         let speculative = input.fork();
         if let Ok(el) = speculative.parse() {
             input.advance_to(&speculative);
-            return Ok(Self::SetNFlag(el));
+            return Ok(Self::SetCFlag(el));
         }
+
+        let speculative = input.fork();
+        if let Ok(el) = speculative.parse() {
+            input.advance_to(&speculative);
+            return Ok(Self::SetVFlag(el));
+        }
+
+        let speculative = input.fork();
+        if let Ok(el) = speculative.parse() {
+            input.advance_to(&speculative);
+            return Ok(Self::Ror(el));
+        }
+
+        let speculative = input.fork();
+        if let Ok(el) = speculative.parse() {
+            input.advance_to(&speculative);
+            return Ok(Self::Sra(el));
+        }
+
         Ok(Self::SetZFlag(input.parse()?))
     }
 }
@@ -67,11 +92,45 @@ impl Parse for FunctionCall {
     }
 }
 
-
 // =========================================================================
 //                          Intrinsics parsing
 // =========================================================================
 
+impl Parse for Jump {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        println!("parsed Ident : {ident}");
+        if ident.to_string().to_lowercase() != "jump".to_owned() {
+            return Err(input.error("jump"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+        println!("Parsing a jump function call");
+
+        let target:Ident = content.parse()?;
+        if input.peek(Token![,]) {
+            let _: Token![,] = content.parse()?;
+            let conditions = content.parse()?;
+            if !content.is_empty() {
+                return Err(content.error("Too many arguments"));
+            }
+            Ok(Self {
+                target,
+                condtion: Some(conditions),
+            })
+        } else {
+            // if !content.is_empty() {
+            //     return Err(content.error("Too many arguments"));
+            // }
+            Ok(Self {
+                target,
+                condtion: None,
+            })
+        }
+    }
+}
 
 impl Parse for LocalAddress {
     fn parse(input: ParseStream) -> Result<Self> {
@@ -83,7 +142,16 @@ impl Parse for LocalAddress {
         input.advance_to(&speculative);
         let content;
         syn::parenthesized!(content in input);
-        let name: Lit = content.parse()?;
+
+        let name: Lit = match content.peek(Ident) {
+            // If name is an identifier, we conver the identifer to a string
+            true => {
+                let ident: Ident = content.parse()?;
+                Lit::Str(LitStr::new(&ident.to_string(), ident.span()))
+            }
+            false => content.parse()?,
+        };
+
         let _: Token![,] = content.parse()?;
         let bits: Lit = content.parse()?;
         if !content.is_empty() {
@@ -92,6 +160,33 @@ impl Parse for LocalAddress {
         Ok(Self { name, bits })
     }
 }
+
+impl Parse for Flag {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        if ident.to_string().to_lowercase() != "flag".to_owned() {
+            return Err(input.error("flag"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+
+        let name: Lit = match content.peek(Ident) {
+            // If name is an identifier, we conver the identifer to a string
+            true => {
+                let ident: Ident = content.parse()?;
+                Lit::Str(LitStr::new(&ident.to_string(), ident.span()))
+            }
+            false => content.parse()?,
+        };
+        if !content.is_empty() {
+            return Err(content.error("Too many arguments"));
+        }
+        Ok(Self { name })
+    }
+}
+
 impl Parse for ZeroExtend {
     fn parse(input: ParseStream) -> Result<Self> {
         let speculative = input.fork();
@@ -104,7 +199,7 @@ impl Parse for ZeroExtend {
         syn::parenthesized!(content in input);
         let op: Operand = content.parse()?;
         let _: Token![,] = content.parse()?;
-        let n: Ident = content.parse()?;
+        let n = content.parse()?;
         if !content.is_empty() {
             return Err(content.error("Too many arguments"));
         }
@@ -114,6 +209,7 @@ impl Parse for ZeroExtend {
         })
     }
 }
+
 impl Parse for SignExtend {
     fn parse(input: ParseStream) -> Result<Self> {
         let speculative = input.fork();
@@ -126,14 +222,15 @@ impl Parse for SignExtend {
         syn::parenthesized!(content in input);
         let op: Operand = content.parse()?;
         let _: Token![,] = content.parse()?;
-        let n: Ident = content.parse()?;
+        let n = content.parse()?;
         if !content.is_empty() {
             return Err(content.error("Too many arguments"));
         }
-        Ok(Self {
+        let mut ret = Ok(Self {
             operand: op,
             bits: n,
-        })
+        });
+        ret
     }
 }
 impl Parse for ConditionalJump {
@@ -190,5 +287,104 @@ impl Parse for SetZFlag {
             return Err(content.error("Too many arguments"));
         }
         Ok(Self { operand: op })
+    }
+}
+impl Parse for SetCFlag {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        if ident.to_string().to_lowercase() != "setcflag".to_owned() {
+            return Err(input.error("Expected setcflag"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+        let op1: Operand = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let op2: Operand = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let sub: Lit = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let carry: Lit = content.parse()?;
+
+        if !content.is_empty() {
+            return Err(content.error("Too many arguments"));
+        }
+        Ok(Self {
+            operand1: op1,
+            operand2: op2,
+            sub,
+            carry,
+        })
+    }
+}
+impl Parse for SetVFlag {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        if ident.to_string().to_lowercase() != "setvflag".to_owned() {
+            return Err(input.error("Expected setvflag"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+        let op1: Operand = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let op2: Operand = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let sub: Lit = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let carry: Lit = content.parse()?;
+
+        if !content.is_empty() {
+            return Err(content.error("Too many arguments"));
+        }
+        Ok(Self {
+            operand1: op1,
+            operand2: op2,
+            sub,
+            carry,
+        })
+    }
+}
+
+impl Parse for Ror {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        if ident.to_string().to_lowercase() != "ror".to_owned() {
+            return Err(input.error("ror"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+        let op: Operand = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let n = content.parse()?;
+        if !content.is_empty() {
+            return Err(content.error("Too many arguments"));
+        }
+        let ret = Ok(Self { operand: op, n });
+        ret
+    }
+}
+
+impl Parse for Sra {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        if ident.to_string().to_lowercase() != "sra".to_owned() {
+            return Err(input.error("sra"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+        let op: Operand = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let n = content.parse()?;
+        if !content.is_empty() {
+            return Err(content.error("Too many arguments"));
+        }
+        Ok(Self { operand: op, n })
     }
 }

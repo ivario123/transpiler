@@ -1,5 +1,16 @@
 use super::operand::Operand;
 
+/// A generic operation,
+///
+/// This allows syntax like
+/// ```ignore
+/// let a = b + c + d;
+/// ```
+pub enum Operation {
+    BinOp(Operand, BinaryOperation, Operand),
+    UnOp(UnaryOperation, Operand),
+}
+
 /// Enumerates all valid binary operations.
 ///
 /// This is merely a type-level denotation of
@@ -29,7 +40,7 @@ pub enum UnaryOperation {
 }
 
 /// An assign statement.
-/// 
+///
 /// This is syntactically equivalent to
 /// ```ignore
 /// a = b;
@@ -41,7 +52,7 @@ pub struct Assign {
 }
 
 /// A unary operation.
-/// 
+///
 /// This is syntactically equivalent to
 /// ```ignore
 /// a = !b;
@@ -54,7 +65,7 @@ pub struct UnOp {
 }
 
 /// A binary operation.
-/// 
+///
 /// This is syntactically equivalent to
 /// ```ignore
 /// a = b + c; // Or any other binary operation

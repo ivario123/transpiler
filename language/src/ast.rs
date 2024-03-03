@@ -9,6 +9,8 @@ use operations::{Assign, BinOp, UnOp};
 
 use syn::{Expr, Ident};
 
+use self::function::Jump;
+
 #[derive(Debug, Clone)]
 /// Top level intermediate representation of the program.
 pub struct IR {
@@ -34,4 +36,5 @@ pub enum IRExpr {
     BinOp(BinOp),
     Assign(Assign),
     Function(Function),
+    Jump(Jump),
 }

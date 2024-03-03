@@ -1,6 +1,6 @@
+use crate::{ast::operand::*, Compile};
 use proc_macro2::TokenStream;
 use quote::quote;
-use crate::{ast::operand::*, Compile};
 
 impl Compile for Operand {
     type Output = TokenStream;

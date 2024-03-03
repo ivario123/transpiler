@@ -21,8 +21,12 @@ impl Compile for Intrinsic {
             Self::SignExtend(s) => s.compile(state),
             Self::SetNFlag(n) => n.compile(state),
             Self::SetZFlag(z) => z.compile(state),
-            Self::ConditionalJump(j) => j.compile(state),
             Self::LocalAddress(a) => a.compile(state),
+            Self::SetVFlag(f) => f.compile(state),
+            Self::SetCFlag(f) => f.compile(state),
+            Self::Flag(f) => f.compile(state),
+            Self::Ror(r) => r.compile(state),
+            Self::Sra(s) => s.compile(state),
         }
     }
 }
@@ -47,13 +51,26 @@ impl Compile for LocalAddress {
     }
 }
 
-impl Compile for ConditionalJump {
+impl Compile for Flag {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
-        let operand = self.operand.compile(state);
-        let condition = self.condition.clone();
+    fn compile(&self, _state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let name = self.name.clone();
+        quote!(Operand::Flag(#name.to_owned()))
+    }
+}
 
-        quote!(Operation::ConditionalJump { destination: #operand,condition:#condition.clone() })
+impl Compile for Jump {
+    type Output = TokenStream;
+    fn compile(&self, _state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let operand = self.target.clone();
+        match self.condtion.clone() {
+            Some(condition) => {
+                quote!(Operation::ConditionalJump { destination: #operand,condition:#condition.clone() })
+            }
+            None => {
+                quote!(Operation::ConditionalJump { destination: #operand,condition:Condition::None })
+            }
+        }
     }
 }
 
@@ -61,7 +78,7 @@ impl Compile for SetNFlag {
     type Output = TokenStream;
     fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
         let operand = self.operand.compile(state);
-        quote!(Operation::SetNFlag { operand: #operand })
+        quote!(Operation::SetNFlag( #operand ))
     }
 }
 
@@ -69,7 +86,31 @@ impl Compile for SetZFlag {
     type Output = TokenStream;
     fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
         let operand = self.operand.compile(state);
-        quote!(Operation::SetZFlag { operand: #operand })
+        quote!(Operation::SetZFlag (#operand))
+    }
+}
+
+impl Compile for SetVFlag {
+    type Output = TokenStream;
+    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let operand1 = self.operand1.compile(state);
+        let operand2 = self.operand2.compile(state);
+        let carry = self.carry.clone();
+        let sub = self.sub.clone();
+
+        quote!(Operation::SetCFlag { operand1: #operand1, operand2: #operand2, carry: #carry, sub: #sub })
+    }
+}
+
+impl Compile for SetCFlag {
+    type Output = TokenStream;
+    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let operand1 = self.operand1.compile(state);
+        let operand2 = self.operand2.compile(state);
+        let carry = self.carry.clone();
+        let sub = self.sub.clone();
+
+        quote!(Operation::SetVFlag { operand1: #operand1, operand2: #operand2, carry: #carry, sub: #sub })
     }
 }
 
@@ -93,9 +134,36 @@ impl Compile for ZeroExtend {
         let intermediate = state.intermediate();
         let operand = self.operand.compile(state);
         let bits = self.bits.clone();
-        state.to_insert_above.push(quote!(Operation::ZeroExtend { d
-                estination: #intermediate.clone(),
+        state.to_insert_above.push(quote!(Operation::ZeroExtend {
+                destination: #intermediate.clone(),
                 operand: #operand, bits: #bits.clone()
+        }));
+        quote!(#intermediate)
+    }
+}
+
+impl Compile for Sra {
+    type Output = TokenStream;
+    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let intermediate = state.intermediate();
+        let operand = self.operand.compile(state);
+        let shift = self.n.clone();
+        state.to_insert_above.push(quote!(Operation::Sra {
+                destination: #intermediate.clone(),
+                operand: #operand, shift: #shift.clone()
+        }));
+        quote!(#intermediate)
+    }
+}
+impl Compile for Ror {
+    type Output = TokenStream;
+    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let intermediate = state.intermediate();
+        let operand = self.operand.compile(state);
+        let shift = self.n.clone();
+        state.to_insert_above.push(quote!(Operation::Sror {
+                destination: #intermediate.clone(),
+                operand: #operand, shift: #shift.clone()
         }));
         quote!(#intermediate)
     }

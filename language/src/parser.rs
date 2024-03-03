@@ -2,6 +2,7 @@ pub mod function;
 pub mod operand;
 pub mod operation;
 
+use crate::ast::function::Jump;
 use crate::ast::*;
 use syn::parse::discouraged::Speculative;
 use syn::parse::{Parse, ParseStream};
@@ -14,19 +15,23 @@ impl Parse for IR {
         // Expected syntax : ret.extend[ .. ]
         let speculative = input.fork();
         let ret: Option<Ident> = match Ident::parse(&speculative) {
-            Ok(ret) => {
-                input.advance_to(&speculative);
-                let _: Token![.] = input.parse()?;
-                let token: Ident = input.parse()?;
-                if token.to_string() != "extend".to_owned() {
-                    return Err(input.error("Exptected extend"));
+            Ok(ret) => match syn::token::Dot::parse(&speculative) {
+                Ok(_) => {
+                    input.advance_to(&speculative);
+
+                    let token: Ident = input.parse()?;
+                    if token.to_string() != "extend".to_owned() {
+                        return Err(input.error("Exptected extend"));
+                    }
+                    Some(ret)
                 }
-                Some(ret)
-            }
+                _ => None,
+            },
             _ => None,
         };
         let content;
         syn::bracketed!(content in input);
+
         let mut extensions: Vec<RustSyntax> = vec![];
         while !content.is_empty() {
             extensions.push(content.parse()?);
@@ -114,6 +119,18 @@ impl Parse for IRExpr {
         }
 
         let speculative = input.fork();
+        if let Ok(res) = speculative.parse() {
+            input.advance_to(&speculative);
+            return Ok(Self::BinOp(res));
+        }
+
+        let speculative = input.fork();
+        if let Ok(res) = speculative.parse() {
+            input.advance_to(&speculative);
+            return Ok(Self::Jump(res));
+        }
+
+        let speculative = input.fork();
         if let Ok(func) = speculative.parse() {
             let speculative_speculative = speculative.fork();
             let token = syn::token::Semi::parse(&speculative_speculative);
@@ -126,7 +143,6 @@ impl Parse for IRExpr {
             }
         }
 
-        let binop: BinOp = input.parse()?;
-        Ok(Self::BinOp(binop))
+        Err(input.error("Expected a valid IRExpr here"))
     }
 }

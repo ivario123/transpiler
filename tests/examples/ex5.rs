@@ -19,11 +19,12 @@ fn main() {
             }
 
             // TODO! Ensure that this is correct for writing only LS byte
-            LocalAddress("address",8) = rt;
+            LocalAddress(address,8) = rt;
 
             if w {
                 rn = offset_addr;
             }
+            Jump(rn);
         ]
     );
 }

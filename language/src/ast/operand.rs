@@ -1,7 +1,7 @@
 //! Defines all valid operand types
 
-use super::function::Function;
-use syn::{Expr, Ident, Lit};
+use super::{function::Function, IRExpr};
+use syn::{BinOp, Expr, Ident, Lit, UnOp};
 
 /// Enumerates all valid operand types
 #[derive(Debug, Clone)]
@@ -9,6 +9,8 @@ pub enum Operand {
     Expr(ExprOperand),
     Ident(IdentOperand),
     FunctionCall(Box<Function>),
+    // UnOp(Box<UnOp>),
+    // BinOp(Box<BinOp>),
 }
 #[derive(Debug, Clone)]
 /// Enumerates a set of different operands.
