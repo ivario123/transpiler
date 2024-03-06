@@ -18,9 +18,12 @@ pub enum Operation {
 #[derive(Debug, Clone)]
 pub enum BinaryOperation {
     Sub,
+    SSub,
     Add,
+    SAdd,
     AddWithCarry,
-    Div,
+    SDiv,
+    UDiv,
     Mul,
     BitwiseAnd,
     BitwiseOr,
@@ -76,4 +79,20 @@ pub struct BinOp {
     pub op: BinaryOperation,
     pub lhs: Operand,
     pub rhs: Operand,
+}
+
+impl BinaryOperation {
+    pub fn signed(&mut self) {
+        *self = match &self {
+            Self::Sub => Self::SSub,
+            Self::Add => Self::SAdd,
+            Self::UDiv => Self::SDiv,
+            e => (*(e.clone())).clone(),
+        };
+    }
+}
+impl BinOp {
+    pub fn signed(&mut self)  {
+        self.op.signed();
+    }
 }

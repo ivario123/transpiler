@@ -7,9 +7,12 @@ pub mod operations;
 use function::Function;
 use operations::{Assign, BinOp, UnOp};
 
-use syn::{Expr, Ident};
+use syn::{Expr, Ident, Lit};
 
-use self::function::Jump;
+use self::{
+    function::{Jump, Signed},
+    operand::Operand,
+};
 
 #[derive(Debug, Clone)]
 /// Top level intermediate representation of the program.
@@ -24,7 +27,7 @@ pub struct IR {
 /// Top level syntactical element.
 pub enum RustSyntax {
     // TODO! Make this accept full expressions
-    If(Ident, Box<RustSyntax>, Option<Box<RustSyntax>>),
+    If(Expr, Box<RustSyntax>, Option<Box<RustSyntax>>),
     For(Ident, Expr, Box<RustSyntax>),
     Exprs(Vec<Box<IRExpr>>),
     RustExpr(Expr),

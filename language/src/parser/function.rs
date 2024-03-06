@@ -1,4 +1,4 @@
-use crate::ast::{function::*, operand::Operand};
+use crate::ast::{function::*, operand::Operand, operations::BinaryOperation};
 use quote::quote;
 use syn::{
     parse::{discouraged::Speculative, Parse, ParseStream, Result},
@@ -23,7 +23,19 @@ impl Parse for Intrinsic {
         let speculative = input.fork();
         if let Ok(el) = speculative.parse() {
             input.advance_to(&speculative);
+            return Ok(Self::Signed(el));
+        }
+
+        let speculative = input.fork();
+        if let Ok(el) = speculative.parse() {
+            input.advance_to(&speculative);
             return Ok(Self::LocalAddress(el));
+        }
+
+        let speculative = input.fork();
+        if let Ok(el) = speculative.parse() {
+            input.advance_to(&speculative);
+            return Ok(Self::Register(el));
         }
 
         let speculative = input.fork();
@@ -96,21 +108,44 @@ impl Parse for FunctionCall {
 //                          Intrinsics parsing
 // =========================================================================
 
+impl Parse for Signed {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let ident: Ident = input.parse()?;
+        if ident.to_string().to_lowercase() != "signed".to_owned() {
+            return Err(input.error("Expected: signed"));
+        }
+
+        let content;
+        syn::parenthesized!(content in input);
+
+        let op1: Operand = content.parse()?;
+        let operation: BinaryOperation = content.parse()?;
+        let op2: Operand = content.parse()?;
+
+        if !content.is_empty() {
+            return Err(content.error("Expected Signed( a {{operation}} b)"));
+        }
+
+        Ok(Self {
+            op1,
+            op2,
+            operation,
+        })
+    }
+}
 impl Parse for Jump {
     fn parse(input: ParseStream) -> Result<Self> {
         let speculative = input.fork();
         let ident: Ident = speculative.parse()?;
-        println!("parsed Ident : {ident}");
         if ident.to_string().to_lowercase() != "jump".to_owned() {
             return Err(input.error("jump"));
         }
         input.advance_to(&speculative);
         let content;
         syn::parenthesized!(content in input);
-        println!("Parsing a jump function call");
 
-        let target:Ident = content.parse()?;
-        if input.peek(Token![,]) {
+        let target: Operand = content.parse()?;
+        if content.peek(Token![,]) {
             let _: Token![,] = content.parse()?;
             let conditions = content.parse()?;
             if !content.is_empty() {
@@ -158,6 +193,33 @@ impl Parse for LocalAddress {
             return Err(content.error("Too many arguments"));
         }
         Ok(Self { name, bits })
+    }
+}
+
+impl Parse for Register {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        let ident = ident.to_string().to_lowercase();
+        if ident != "register".to_owned() && ident != "reg".to_owned() {
+            return Err(input.error("expected Reg or Register"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+
+        let name: Lit = match content.peek(Ident) {
+            // If name is an identifier, we conver the identifer to a string
+            true => {
+                let ident: Ident = content.parse()?;
+                Lit::Str(LitStr::new(&ident.to_string(), ident.span()))
+            }
+            false => content.parse()?,
+        };
+        if !content.is_empty() {
+            return Err(content.error("Too many arguments"));
+        }
+        Ok(Self { name })
     }
 }
 
@@ -237,8 +299,8 @@ impl Parse for ConditionalJump {
     fn parse(input: ParseStream) -> Result<Self> {
         let speculative = input.fork();
         let ident: Ident = speculative.parse()?;
-        if ident.to_string().to_lowercase() != "signextend".to_owned() {
-            return Err(input.error("Expected signextend"));
+        if ident.to_string().to_lowercase() != "conditionaljump".to_owned() {
+            return Err(input.error("Expected ConditionalJump"));
         }
         input.advance_to(&speculative);
         let content;

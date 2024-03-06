@@ -50,8 +50,22 @@ impl Compile for BinOp {
                             operand2: #rhs
                         }
             ),
+            BinaryOperation::SSub => quote!(
+                        Operation::SSub {
+                            destination: #dst,
+                            operand1: #lhs,
+                            operand2: #rhs
+                        }
+            ),
             BinaryOperation::Add => quote!(
                         Operation::Add {
+                            destination: #dst,
+                            operand1: #lhs,
+                            operand2: #rhs
+                        }
+            ),
+            BinaryOperation::SAdd => quote!(
+                        Operation::SAdd {
                             destination: #dst,
                             operand1: #lhs,
                             operand2: #rhs
@@ -64,8 +78,15 @@ impl Compile for BinOp {
                             operand2: #rhs
                         }
             ),
-            BinaryOperation::Div => quote!(
-                        Operation::Div {
+            BinaryOperation::UDiv => quote!(
+                        Operation::UDiv {
+                            destination: #dst,
+                            operand1: #lhs,
+                            operand2: #rhs
+                        }
+            ),
+            BinaryOperation::SDiv => quote!(
+                        Operation::SDiv {
                             destination: #dst,
                             operand1: #lhs,
                             operand2: #rhs

@@ -1,14 +1,14 @@
 //! Defines all valid operand types
 
 use super::{function::Function, IRExpr};
-use syn::{BinOp, Expr, Ident, Lit, UnOp};
+use syn::{BinOp, Expr, Ident, Lit, Type, UnOp};
 
 /// Enumerates all valid operand types
 #[derive(Debug, Clone)]
 pub enum Operand {
     Expr(ExprOperand),
     Ident(IdentOperand),
-    FunctionCall(Box<Function>),
+    FieldExtract(FieldExtract),
     // UnOp(Box<UnOp>),
     // BinOp(Box<BinOp>),
 }
@@ -35,4 +35,18 @@ pub struct IdentOperand {
     pub define: bool,
     /// The identifier used
     pub ident: Ident,
+}
+
+#[derive(Debug, Clone)]
+pub enum DelimiterType {
+    Const(Lit),
+    Ident(Ident),
+}
+
+#[derive(Debug, Clone)]
+pub struct FieldExtract {
+    pub operand: Ident,
+    pub start: DelimiterType,
+    pub end: DelimiterType,
+    pub ty: Option<Type>,
 }

@@ -1,4 +1,11 @@
-use crate::{ast::function::*, Compile, CompilerState};
+use crate::{
+    ast::{
+        function::*,
+        operand::{IdentOperand, Operand},
+        operations::{BinOp, BinaryOperation},
+    },
+    Compile, CompilerState,
+};
 use proc_macro2::TokenStream;
 use quote::quote;
 
@@ -25,8 +32,10 @@ impl Compile for Intrinsic {
             Self::SetVFlag(f) => f.compile(state),
             Self::SetCFlag(f) => f.compile(state),
             Self::Flag(f) => f.compile(state),
+            Self::Register(r) => r.compile(state),
             Self::Ror(r) => r.compile(state),
             Self::Sra(s) => s.compile(state),
+            Self::Signed(s) => s.compile(state),
         }
     }
 }
@@ -42,12 +51,45 @@ impl Compile for FunctionCall {
     }
 }
 
+impl Compile for Signed {
+    type Output = TokenStream;
+    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let lhs = self.op1.clone();
+        let rhs = self.op2.clone();
+        let mut op = self.operation.clone();
+        op.signed();
+        let dst = state.intermediate();
+        let operation = BinOp {
+            lhs,
+            rhs,
+            dest: Operand::Ident(IdentOperand {
+                ident: dst.clone(),
+                define: false,
+            }),
+            op,
+        }
+        .compile(state);
+        state.to_insert_above.push(operation);
+        quote!(
+        #dst
+        )
+    }
+}
+
 impl Compile for LocalAddress {
     type Output = TokenStream;
     fn compile(&self, _state: &mut CompilerState<Self::Output>) -> Self::Output {
         let name = self.name.clone();
         let bits = self.bits.clone();
         quote!(Operand::AddressInLocal(#name.to_owned(),#bits))
+    }
+}
+
+impl Compile for Register {
+    type Output = TokenStream;
+    fn compile(&self, _state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let name = self.name.clone();
+        quote!(Operand::Register(#name.to_owned()))
     }
 }
 
@@ -61,8 +103,8 @@ impl Compile for Flag {
 
 impl Compile for Jump {
     type Output = TokenStream;
-    fn compile(&self, _state: &mut CompilerState<Self::Output>) -> Self::Output {
-        let operand = self.target.clone();
+    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let operand = self.target.clone().compile(state);
         match self.condtion.clone() {
             Some(condition) => {
                 quote!(Operation::ConditionalJump { destination: #operand,condition:#condition.clone() })

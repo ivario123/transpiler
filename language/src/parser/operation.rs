@@ -1,14 +1,22 @@
 use crate::ast::operand::Operand;
 use crate::ast::operations::{Assign, BinOp, BinaryOperation, UnOp, UnaryOperation};
+use syn::parse::discouraged::Speculative;
 use syn::{
     parse::{Parse, ParseStream, Result},
     Ident, Token,
 };
 impl Parse for Assign {
     fn parse(input: ParseStream) -> Result<Self> {
+        println!("      Parsing an Assign from {input}");
         let dest: Operand = input.parse()?;
+        println!("          Parsed a opernad {dest:?}");
+        
         let _: Token![=] = input.parse()?;
         let rhs: Operand = input.parse()?;
+        println!("          Parsed a opernad {rhs:?}");
+        if !input.peek(Token![;]){
+            return Err(input.error("Expected ;"));
+        }
         Ok(Self { dest, rhs })
     }
 }
@@ -19,7 +27,7 @@ impl Parse for UnOp {
         let op: UnaryOperation = input.parse()?;
         let rhs: Operand = input.parse()?;
         if !input.peek(syn::token::Semi) {
-            return Err(input.error("Expected semi colon"));
+            return Err(input.error("Expected ;"));
         }
         Ok(Self { dest, op, rhs })
     }
@@ -34,6 +42,9 @@ impl Parse for BinOp {
         let op: BinaryOperation = input.parse()?;
 
         let rhs: Operand = input.parse()?;
+        if !input.peek(syn::token::Semi) {
+            return Err(input.error("Expected ;"));
+        }
         Ok(Self { dest, op, lhs, rhs })
     }
 }
@@ -58,17 +69,24 @@ impl Parse for BinaryOperation {
             return Ok(Sub);
         }
         if input.peek(Ident) {
-            let ident: Ident = input.parse()?;
+            let speculative = input.fork();
+            let ident: Ident = speculative.parse()?;
             if ident.to_string().to_lowercase() == "adc" {
+                input.advance_to(&speculative);
                 return Ok(AddWithCarry);
-            } else {
-                todo!()
-                // compile_error!("Expected \"Adc\" found {:}",ident.to_string());
             }
         }
         if input.peek(syn::token::Slash) {
             let _: syn::token::Slash = input.parse()?;
-            return Ok(Self::Div);
+            return Ok(Self::UDiv);
+        }
+        if input.peek(Ident) {
+            let speculative = input.fork();
+            let ident: Ident = speculative.parse()?;
+            if ident.to_string().to_lowercase() == "sdiv" {
+                input.advance_to(&speculative);
+                return Ok(SDiv);
+            }
         }
         if input.peek(Token![*]) {
             let _: Token![*] = input.parse()?;

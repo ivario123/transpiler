@@ -1,5 +1,5 @@
 //! Defines all AST types that are concern functions
-use super::operand::Operand;
+use super::{operand::Operand, operations::BinaryOperation, IRExpr, RustSyntax};
 use syn::{Expr, Ident, Lit};
 
 #[derive(Debug, Clone)]
@@ -35,8 +35,10 @@ pub enum Intrinsic {
     SetVFlag(SetVFlag),
     SetCFlag(SetCFlag),
     Flag(Flag),
+    Register(Register),
     Ror(Ror),
     Sra(Sra),
+    Signed(Signed)
 }
 
 // ===============================================
@@ -45,8 +47,15 @@ pub enum Intrinsic {
 
 #[derive(Debug, Clone)]
 pub struct Jump {
-    pub target: Ident,
+    pub target: Operand,
     pub condtion: Option<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Signed {
+    pub op1:Operand,
+    pub op2:Operand,
+    pub operation:BinaryOperation,
 }
 
 #[derive(Debug, Clone)]
@@ -63,6 +72,11 @@ pub struct SignExtend {
 
 #[derive(Debug, Clone)]
 pub struct Flag {
+    pub name: Lit,
+}
+
+#[derive(Debug, Clone)]
+pub struct Register {
     pub name: Lit,
 }
 

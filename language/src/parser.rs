@@ -6,12 +6,12 @@ use crate::ast::function::Jump;
 use crate::ast::*;
 use syn::parse::discouraged::Speculative;
 use syn::parse::{Parse, ParseStream};
-use syn::{Expr, Ident, Result, Token};
+use syn::{parenthesized, Expr, Ident, Lit, Result, Token};
 
 use self::operations::BinOp;
 
-impl Parse for IR {
-    fn parse(input: ParseStream) -> Result<Self> {
+impl IR {
+    fn parse_internal(input: ParseStream) -> Result<Self> {
         // Expected syntax : ret.extend[ .. ]
         let speculative = input.fork();
         let ret: Option<Ident> = match Ident::parse(&speculative) {
@@ -44,12 +44,27 @@ impl Parse for IR {
         Ok(ret)
     }
 }
+impl Parse for IR {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let ret = match Self::parse_internal(input) {
+            Ok(val) => val,
+            Err(e) => {
+                return Err(e);
+            }
+        };
+        Ok(ret)
+    }
+}
 impl Parse for RustSyntax {
     fn parse(input: ParseStream) -> Result<Self> {
         if input.peek(Token![if]) {
             let _: Token![if] = input.parse()?;
-            // Maaaasive limit, this should be expanded in the future
-            let e: Ident = input.parse()?;
+            // Simply require parenthesise here, this is a bit of a "fulhack"
+            // but it works for now
+            let content;
+            parenthesized!(content in input);
+
+            let e: Expr = content.parse()?;
             let content;
             syn::braced!(content in input);
             let happy_case: Box<RustSyntax> = Box::new(content.parse()?);
@@ -81,9 +96,13 @@ impl Parse for RustSyntax {
             let speculative = input.fork();
             match speculative.parse() {
                 Ok(val) => {
+                    let _: syn::token::Semi = match speculative.parse(){
+                        Ok(t) => t,
+                        Err(_) => return Err(speculative.error("Expected `;`"))
+
+                    };
                     input.advance_to(&speculative);
                     ret.push(Box::new(val));
-                    let _: syn::token::Semi = input.parse()?;
                 }
                 Err(e) => {
                     if ret.len() != 0 {
@@ -99,50 +118,46 @@ impl Parse for RustSyntax {
 
 impl Parse for IRExpr {
     fn parse(input: ParseStream) -> Result<Self> {
+        println!("Parsing an IRExpr from {input}");
         let speculative = input.fork();
         if let Ok(unop) = speculative.parse() {
+            println!("  Found unop {unop:?}");
+            println!("  Remaning tokens : {speculative}");
             input.advance_to(&speculative);
             return Ok(Self::UnOp(unop));
         }
 
         let speculative = input.fork();
         if let Ok(assign) = speculative.parse() {
-            let speculative_speculative = speculative.fork();
-            let token = syn::token::Semi::parse(&speculative_speculative);
-            match token {
-                Ok(_) => {
-                    input.advance_to(&speculative);
-                    return Ok(Self::Assign(assign));
-                }
-                _ => {}
-            }
+            println!("  Found assign {assign:?}");
+            println!("  Remaning tokens : {speculative}");
+            input.advance_to(&speculative);
+            return Ok(Self::Assign(assign));
         }
 
         let speculative = input.fork();
         if let Ok(res) = speculative.parse() {
+            println!("  Found binop {res:?}");
+            println!("  Remaning tokens : {speculative}");
             input.advance_to(&speculative);
             return Ok(Self::BinOp(res));
         }
 
         let speculative = input.fork();
         if let Ok(res) = speculative.parse() {
+            println!("  Found jump {res:?}");
+            println!("  Remaning tokens : {speculative}");
             input.advance_to(&speculative);
             return Ok(Self::Jump(res));
         }
 
         let speculative = input.fork();
         if let Ok(func) = speculative.parse() {
-            let speculative_speculative = speculative.fork();
-            let token = syn::token::Semi::parse(&speculative_speculative);
-            match token {
-                Ok(_) => {
-                    input.advance_to(&speculative);
-                    return Ok(Self::Function(func));
-                }
-                _ => {}
-            }
+            println!("  Found function call {func:?}");
+            println!("  Remaning tokens : {speculative}");
+            input.advance_to(&speculative);
+            return Ok(Self::Function(func));
         }
-
         Err(input.error("Expected a valid IRExpr here"))
     }
 }
