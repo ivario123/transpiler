@@ -1,7 +1,7 @@
 //! Defines all valid operand types
 
-use super::{function::Function, IRExpr};
-use syn::{BinOp, Expr, Ident, Lit, Type, UnOp};
+use super::{function::Function};
+use syn::{Expr, Ident, Lit, Type};
 
 /// Enumerates all valid operand types
 #[derive(Debug, Clone)]

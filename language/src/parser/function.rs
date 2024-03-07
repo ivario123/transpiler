@@ -1,8 +1,6 @@
 use crate::ast::{function::*, operand::Operand, operations::BinaryOperation};
-use quote::quote;
 use syn::{
-    parse::{discouraged::Speculative, Parse, ParseStream, Result},
-    parse_macro_input, Expr, Ident, Lit, LitStr, Token,
+    parse::{discouraged::Speculative, Parse, ParseStream, Result}, Expr, Ident, Lit, LitStr, Token,
 };
 impl Parse for Function {
     fn parse(input: ParseStream) -> Result<Self> {

@@ -7,11 +7,10 @@ pub mod operations;
 use function::Function;
 use operations::{Assign, BinOp, UnOp};
 
-use syn::{Expr, Ident, Lit};
+use syn::{Expr, Ident};
 
 use self::{
-    function::{Jump, Signed},
-    operand::Operand,
+    function::{Jump},
 };
 
 #[derive(Debug, Clone)]

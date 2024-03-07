@@ -1,5 +1,4 @@
 use crate::{ast::operand::*, Compile};
-use general_assembly::operand;
 use proc_macro2::TokenStream;
 use quote::quote;
 

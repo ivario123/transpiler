@@ -1,5 +1,5 @@
 //! Defines all AST types that are concern functions
-use super::{operand::Operand, operations::BinaryOperation, IRExpr, RustSyntax};
+use super::{operand::Operand, operations::BinaryOperation};
 use syn::{Expr, Ident, Lit};
 
 #[derive(Debug, Clone)]

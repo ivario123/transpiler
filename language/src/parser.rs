@@ -2,12 +2,11 @@ pub mod function;
 pub mod operand;
 pub mod operation;
 
-use crate::ast::function::Jump;
-use crate::ast::operand::{ExprOperand, Operand};
+use crate::ast::operand::{Operand};
 use crate::ast::*;
 use syn::parse::discouraged::Speculative;
 use syn::parse::{Parse, ParseStream};
-use syn::{parenthesized, Expr, Ident, Lit, Result, Token};
+use syn::{parenthesized, Expr, Ident, Result, Token};
 
 use self::operations::{BinOp, BinaryOperation};
 

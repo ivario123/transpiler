@@ -2,7 +2,7 @@ use crate::{
     ast::{
         function::*,
         operand::{IdentOperand, Operand},
-        operations::{BinOp, BinaryOperation},
+        operations::{BinOp},
     },
     Compile, CompilerState,
 };
