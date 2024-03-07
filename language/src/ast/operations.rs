@@ -87,7 +87,7 @@ impl BinaryOperation {
             Self::Sub => Self::SSub,
             Self::Add => Self::SAdd,
             Self::UDiv => Self::SDiv,
-            e => (*(e.clone())).clone(),
+            e => (*e).clone(),
         };
     }
 }
