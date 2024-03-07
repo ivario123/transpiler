@@ -7,13 +7,10 @@ use syn::{
 };
 impl Parse for Assign {
     fn parse(input: ParseStream) -> Result<Self> {
-        println!("      Parsing an Assign from {input}");
         let dest: Operand = input.parse()?;
-        println!("          Parsed a opernad {dest:?}");
         
         let _: Token![=] = input.parse()?;
         let rhs: Operand = input.parse()?;
-        println!("          Parsed a opernad {rhs:?}");
         if !input.peek(Token![;]){
             return Err(input.error("Expected ;"));
         }

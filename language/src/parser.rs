@@ -3,12 +3,13 @@ pub mod operand;
 pub mod operation;
 
 use crate::ast::function::Jump;
+use crate::ast::operand::{ExprOperand, Operand};
 use crate::ast::*;
 use syn::parse::discouraged::Speculative;
 use syn::parse::{Parse, ParseStream};
 use syn::{parenthesized, Expr, Ident, Lit, Result, Token};
 
-use self::operations::BinOp;
+use self::operations::{BinOp, BinaryOperation};
 
 impl IR {
     fn parse_internal(input: ParseStream) -> Result<Self> {
@@ -118,43 +119,57 @@ impl Parse for RustSyntax {
 
 impl Parse for IRExpr {
     fn parse(input: ParseStream) -> Result<Self> {
-        println!("Parsing an IRExpr from {input}");
         let speculative = input.fork();
         if let Ok(unop) = speculative.parse() {
-            println!("  Found unop {unop:?}");
-            println!("  Remaning tokens : {speculative}");
             input.advance_to(&speculative);
             return Ok(Self::UnOp(unop));
         }
 
         let speculative = input.fork();
         if let Ok(assign) = speculative.parse() {
-            println!("  Found assign {assign:?}");
-            println!("  Remaning tokens : {speculative}");
             input.advance_to(&speculative);
             return Ok(Self::Assign(assign));
+        }
+        
+        'a:{
+            let speculative = input.fork();
+            let dest: Operand = match speculative.parse(){
+                Ok(val) => val,
+                _ => break 'a
+            };
+            let operation: BinaryOperation =  match speculative.parse(){
+                Ok(val) => val,
+                _ => break 'a
+            };
+            let _eq: Token![=] = match speculative.parse(){
+                Ok(val) => val,
+                _ => break 'a
+            };
+            let operand : Operand = match speculative.parse(){
+                Ok(val) => val,
+                _ => break 'a
+            };
+            if !speculative.peek(Token![;]){
+                break 'a;
+            }
+            input.advance_to(&speculative);
+            return Ok(Self::BinOp(BinOp { dest:dest.clone(), op: operation, lhs: dest, rhs: operand }))
         }
 
         let speculative = input.fork();
         if let Ok(res) = speculative.parse() {
-            println!("  Found binop {res:?}");
-            println!("  Remaning tokens : {speculative}");
             input.advance_to(&speculative);
             return Ok(Self::BinOp(res));
         }
 
         let speculative = input.fork();
         if let Ok(res) = speculative.parse() {
-            println!("  Found jump {res:?}");
-            println!("  Remaning tokens : {speculative}");
             input.advance_to(&speculative);
             return Ok(Self::Jump(res));
         }
 
         let speculative = input.fork();
         if let Ok(func) = speculative.parse() {
-            println!("  Found function call {func:?}");
-            println!("  Remaning tokens : {speculative}");
             input.advance_to(&speculative);
             return Ok(Self::Function(func));
         }

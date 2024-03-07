@@ -29,6 +29,7 @@ pub struct FunctionCall {
 pub enum Intrinsic {
     ZeroExtend(ZeroExtend),
     SignExtend(SignExtend),
+    Resize(Resize),
     SetNFlag(SetNFlag),
     SetZFlag(SetZFlag),
     LocalAddress(LocalAddress),
@@ -56,6 +57,12 @@ pub struct Signed {
     pub op1:Operand,
     pub op2:Operand,
     pub operation:BinaryOperation,
+}
+
+#[derive(Debug, Clone)]
+pub struct Resize {
+    pub operand: Operand,
+    pub bits: Expr,
 }
 
 #[derive(Debug, Clone)]

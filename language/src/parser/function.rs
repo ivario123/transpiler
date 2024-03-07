@@ -49,10 +49,17 @@ impl Parse for Intrinsic {
             input.advance_to(&speculative);
             return Ok(Self::ZeroExtend(el));
         }
+
         let speculative = input.fork();
         if let Ok(el) = speculative.parse() {
             input.advance_to(&speculative);
             return Ok(Self::SignExtend(el));
+        }
+
+        let speculative = input.fork();
+        if let Ok(el) = speculative.parse() {
+            input.advance_to(&speculative);
+            return Ok(Self::Resize(el));
         }
 
         let speculative = input.fork();
@@ -272,6 +279,30 @@ impl Parse for ZeroExtend {
     }
 }
 
+impl Parse for Resize {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        if ident.to_string().to_lowercase() != "resize".to_owned() {
+            return Err(input.error("Expected resize"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+        let op: Operand = content.parse()?;
+        let _: Token![,] = content.parse()?;
+        let n = content.parse()?;
+        if !content.is_empty() {
+            return Err(content.error("Too many arguments"));
+        }
+        let ret = Ok(Self {
+            operand: op,
+            bits: n,
+        });
+        ret
+    }
+}
+
 impl Parse for SignExtend {
     fn parse(input: ParseStream) -> Result<Self> {
         let speculative = input.fork();
@@ -288,7 +319,7 @@ impl Parse for SignExtend {
         if !content.is_empty() {
             return Err(content.error("Too many arguments"));
         }
-        let mut ret = Ok(Self {
+        let ret = Ok(Self {
             operand: op,
             bits: n,
         });

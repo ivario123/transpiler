@@ -26,6 +26,7 @@ impl Compile for Intrinsic {
         match self {
             Self::ZeroExtend(z) => z.compile(state),
             Self::SignExtend(s) => s.compile(state),
+            Self::Resize(r) => r.compile(state),
             Self::SetNFlag(n) => n.compile(state),
             Self::SetZFlag(z) => z.compile(state),
             Self::LocalAddress(a) => a.compile(state),
@@ -153,6 +154,20 @@ impl Compile for SetCFlag {
         let sub = self.sub.clone();
 
         quote!(Operation::SetVFlag { operand1: #operand1, operand2: #operand2, carry: #carry, sub: #sub })
+    }
+}
+
+impl Compile for Resize{
+    type Output = TokenStream;
+    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+        let intermediate = state.intermediate();
+        let operand = self.operand.compile(state);
+        let bits = self.bits.clone();
+        state.to_insert_above.push(quote!(Operation::Resize {
+                destination: #intermediate.clone(),
+                operand: #operand, bits: #bits.clone()
+        }));
+        quote!(#intermediate)
     }
 }
 
