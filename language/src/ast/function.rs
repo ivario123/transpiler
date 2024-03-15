@@ -39,7 +39,7 @@ pub enum Intrinsic {
     Register(Register),
     Ror(Ror),
     Sra(Sra),
-    Signed(Signed)
+    Signed(Signed),
 }
 
 // ===============================================
@@ -54,9 +54,9 @@ pub struct Jump {
 
 #[derive(Debug, Clone)]
 pub struct Signed {
-    pub op1:Operand,
-    pub op2:Operand,
-    pub operation:BinaryOperation,
+    pub op1: Operand,
+    pub op2: Operand,
+    pub operation: BinaryOperation,
 }
 
 #[derive(Debug, Clone)]

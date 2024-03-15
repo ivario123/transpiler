@@ -1,6 +1,8 @@
 use crate::ast::{function::*, operand::Operand, operations::BinaryOperation};
 use syn::{
-    parse::{discouraged::Speculative, Parse, ParseStream, Result}, Expr, Ident, Lit, LitStr, Token,
+    parse::{discouraged::Speculative, Parse, ParseStream, Result},
+    spanned::Spanned,
+    Expr, Ident, Lit, LitStr, Token,
 };
 impl Parse for Function {
     fn parse(input: ParseStream) -> Result<Self> {
@@ -393,10 +395,36 @@ impl Parse for SetCFlag {
         let op1: Operand = content.parse()?;
         let _: Token![,] = content.parse()?;
         let op2: Operand = content.parse()?;
+
         let _: Token![,] = content.parse()?;
-        let sub: Lit = content.parse()?;
-        let _: Token![,] = content.parse()?;
-        let carry: Lit = content.parse()?;
+
+        let (sub, carry) = if content.peek(Ident) {
+            println!("Parsing a cool new thing");
+            // Now we can support ADC, SUB, SBC, ADD
+            let ident: Ident = content.parse()?;
+            let f = Lit::Bool(syn::LitBool {
+                value: false,
+                span: ident.span(),
+            });
+            let t = Lit::Bool(syn::LitBool {
+                value: true,
+                span: ident.span(),
+            });
+            let ident = ident.to_string();
+            match ident.to_lowercase().as_str() {
+                "adc" => (f, t),
+                "sub" => (t, f),
+                "sbc" => (t.clone(), t),
+                "add" => (f.clone(), f),
+                _ => return Err(input.error("Previous value must be adc, sub, sbc or add")),
+            }
+        } else {
+            let sub: Lit = content.parse()?;
+
+            let _: Token![,] = content.parse()?;
+            let carry: Lit = content.parse()?;
+            (sub, carry)
+        };
 
         if !content.is_empty() {
             return Err(content.error("Too many arguments"));
@@ -422,10 +450,35 @@ impl Parse for SetVFlag {
         let op1: Operand = content.parse()?;
         let _: Token![,] = content.parse()?;
         let op2: Operand = content.parse()?;
+
         let _: Token![,] = content.parse()?;
-        let sub: Lit = content.parse()?;
-        let _: Token![,] = content.parse()?;
-        let carry: Lit = content.parse()?;
+
+        let (sub, carry) = if content.peek(Ident) {
+            // Now we can support ADC, SUB, SBC, ADD
+            let ident: Ident = content.parse()?;
+            let f = Lit::Bool(syn::LitBool {
+                value: false,
+                span: ident.span(),
+            });
+            let t = Lit::Bool(syn::LitBool {
+                value: true,
+                span: ident.span(),
+            });
+            let ident = ident.to_string();
+            match ident.to_lowercase().as_str() {
+                "adc" => (f, t),
+                "sub" => (t, f),
+                "sbc" => (t.clone(), t),
+                "add" => (f.clone(), f),
+                _ => return Err(input.error("Previous value must be adc, sub, sbc or add")),
+            }
+        } else {
+            let sub: Lit = content.parse()?;
+
+            let _: Token![,] = content.parse()?;
+            let carry: Lit = content.parse()?;
+            (sub, carry)
+        };
 
         if !content.is_empty() {
             return Err(content.error("Too many arguments"));

@@ -9,9 +9,7 @@ use operations::{Assign, BinOp, UnOp};
 
 use syn::{Expr, Ident};
 
-use self::{
-    function::{Jump},
-};
+use self::function::Jump;
 
 #[derive(Debug, Clone)]
 /// Top level intermediate representation of the program.
@@ -22,12 +20,13 @@ pub struct IR {
     pub extensions: Vec<RustSyntax>,
 }
 
+
 #[derive(Debug, Clone)]
 /// Top level syntactical element.
 pub enum RustSyntax {
     // TODO! Make this accept full expressions
-    If(Expr, Box<RustSyntax>, Option<Box<RustSyntax>>),
-    For(Ident, Expr, Box<RustSyntax>),
+    If(Expr, Box<Vec<RustSyntax>>, Option<Box<Vec<RustSyntax>>>),
+    For(Ident, Expr, Box<Vec<RustSyntax>>),
     Exprs(Vec<Box<IRExpr>>),
     RustExpr(Expr),
 }

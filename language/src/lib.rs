@@ -31,4 +31,3 @@ impl<T> CompilerState<T> {
         new_ident
     }
 }
-

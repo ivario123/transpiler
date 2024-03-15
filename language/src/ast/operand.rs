@@ -1,6 +1,6 @@
 //! Defines all valid operand types
 
-use super::{function::Function};
+use super::function::Function;
 use syn::{Expr, Ident, Lit, Type};
 
 /// Enumerates all valid operand types

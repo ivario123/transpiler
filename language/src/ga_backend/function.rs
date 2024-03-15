@@ -2,7 +2,7 @@ use crate::{
     ast::{
         function::*,
         operand::{IdentOperand, Operand},
-        operations::{BinOp},
+        operations::BinOp,
     },
     Compile, CompilerState,
 };
@@ -157,7 +157,7 @@ impl Compile for SetCFlag {
     }
 }
 
-impl Compile for Resize{
+impl Compile for Resize {
     type Output = TokenStream;
     fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
         let intermediate = state.intermediate();

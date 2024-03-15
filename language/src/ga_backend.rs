@@ -50,7 +50,7 @@ impl Compile for IRExpr {
             Self::UnOp(unop) => unop.compile(state),
             Self::BinOp(binop) => binop.compile(state),
             Self::Function(f) => f.compile(state),
-            Self::Jump(j) => j.compile(state),                
+            Self::Jump(j) => j.compile(state),
         }
     }
 }
@@ -63,24 +63,31 @@ impl Compile for (Ident, RustSyntax) {
                 let to_declare_global: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_global = to_declare_global.iter().map(|el| el.to_string());
 
-                let happy_case = (self.0.clone(), *happy_case).compile(state);
+                let happy_case: Vec<TokenStream> = (*happy_case)
+                    .into_iter()
+                    .map(|el| (self.0.clone(), el).compile(state))
+                    .collect();
                 let to_declare_happy: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_happy = to_declare_happy.iter().map(|el| el.to_string());
 
-                let sad_case = (self.0.clone(), *sad_case).compile(state);
+                let sad_case: Vec<TokenStream> = (*sad_case)
+                    .into_iter()
+                    .map(|el| (self.0.clone(), el).compile(state))
+                    .collect();
                 let to_declare_sad: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_sad = to_declare_sad.iter().map(|el| el.to_string());
+
                 quote!(
                     #(let #to_declare_global =
                         Operand::Local(#declaration_strings_global.to_owned());)*
                     if #e {
                         #(let #to_declare_happy =
                             Operand::Local(#declaration_strings_happy.to_owned());)*
-                        #happy_case;
+                        #(#happy_case;)*
                     } else {
                         #(let #to_declare_sad =
                             Operand::Local(#declaration_strings_sad.to_owned());)*
-                        #sad_case;
+                        #(#sad_case;)*
                     }
                 )
             }
@@ -88,7 +95,10 @@ impl Compile for (Ident, RustSyntax) {
                 let to_declare_global: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_global = to_declare_global.iter().map(|el| el.to_string());
 
-                let happy_case = (self.0.clone(), *happy_case).compile(state);
+                let happy_case: Vec<TokenStream> = (*happy_case)
+                    .into_iter()
+                    .map(|el| (self.0.clone(), el).compile(state))
+                    .collect();
                 let to_declare_happy: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_happy = to_declare_happy.iter().map(|el| el.to_string());
                 quote!(
@@ -97,14 +107,17 @@ impl Compile for (Ident, RustSyntax) {
                     if #e {
                         #(let #to_declare_happy =
                             Operand::Local(#declaration_strings_happy.to_owned());)*
-                        #happy_case;
+                        #(#happy_case;)*
                     }
                 )
             }
             RustSyntax::For(i, e, block) => {
                 let to_declare_global: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_global = to_declare_global.iter().map(|el| el.to_string());
-                let block = (self.0.clone(), *block).compile(state);
+                let block: Vec<TokenStream> = (*block)
+                    .into_iter()
+                    .map(|el| (self.0.clone(), el).compile(state))
+                    .collect();
                 let to_declare_inner: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_inner = to_declare_inner.iter().map(|el| el.to_string());
                 quote!(
@@ -113,7 +126,7 @@ impl Compile for (Ident, RustSyntax) {
                     for #i in #e {
                         #(let #to_declare_inner =
                             Operand::Local(#declaration_strings_inner.to_owned());)*
-                        #block
+                        #(#block;)*
                     }
                 )
             }

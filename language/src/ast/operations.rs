@@ -92,7 +92,7 @@ impl BinaryOperation {
     }
 }
 impl BinOp {
-    pub fn signed(&mut self)  {
+    pub fn signed(&mut self) {
         self.op.signed();
     }
 }

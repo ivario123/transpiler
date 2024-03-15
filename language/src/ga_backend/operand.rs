@@ -79,10 +79,11 @@ impl Compile for FieldExtract {
                 }
             ),
             quote!(
+                #[allow(clippy::unnecessary_cast)] 
                 Operation::And {
                     destination: #intermediate2.clone(),
                     operand1: #intermediate1.clone(),
-                    operand2: Operand::Immidiate((((0b1 << (#end-#start as #ty)) as #ty) - (1 as #ty)).into())
+                    operand2: Operand::Immidiate(((((0b1u64 << (#end as u64 - #start as u64 + 1u64)) as u64) - (1 as u64))as #ty).into() )
                 }
             ),
         ]);

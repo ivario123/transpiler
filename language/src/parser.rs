@@ -2,7 +2,9 @@ pub mod function;
 pub mod operand;
 pub mod operation;
 
-use crate::ast::operand::{Operand};
+use std::collections::VecDeque;
+
+use crate::ast::operand::Operand;
 use crate::ast::*;
 use syn::parse::discouraged::Speculative;
 use syn::parse::{Parse, ParseStream};
@@ -65,14 +67,27 @@ impl Parse for RustSyntax {
             parenthesized!(content in input);
 
             let e: Expr = content.parse()?;
+            if !content.is_empty() {
+                return Err(content.error("Too many input arguments"));
+            }
             let content;
             syn::braced!(content in input);
-            let happy_case: Box<RustSyntax> = Box::new(content.parse()?);
+            
+            let mut happy_case = Box::new(vec![]); 
+            while !content.is_empty() {
+                let further_values: RustSyntax = content.parse()?; 
+                happy_case.push(further_values);
+            }
             let sad_case = if input.peek(Token![else]) {
                 let _: Token![else] = input.parse()?;
                 let content;
                 syn::braced!(content in input);
-                Some(Box::new(content.parse()?))
+                let mut sad_case = Box::new(vec![]); 
+                while !content.is_empty() {
+                    let further_values: RustSyntax = content.parse()?; 
+                    sad_case.push(further_values);
+                }
+                Some(sad_case)
             } else {
                 None
             };
@@ -85,10 +100,16 @@ impl Parse for RustSyntax {
             let e: Expr = input.parse()?;
             let content;
             syn::braced!(content in input);
-            let block: Box<RustSyntax> = Box::new(content.parse()?);
+            let mut block = Box::new(vec![]); 
+            while !content.is_empty() {
+                let further_values: RustSyntax = content.parse()?; 
+                block.push(further_values);
+            }
             return Ok(Self::For(var, e, block));
         }
+
         let mut ret: Vec<Box<IRExpr>> = vec![];
+
         while !input.is_empty() {
             if input.peek(Token![if]) | input.peek(Token![for]) {
                 break;
@@ -96,10 +117,9 @@ impl Parse for RustSyntax {
             let speculative = input.fork();
             match speculative.parse() {
                 Ok(val) => {
-                    let _: syn::token::Semi = match speculative.parse(){
+                    let _: syn::token::Semi = match speculative.parse() {
                         Ok(t) => t,
-                        Err(_) => return Err(speculative.error("Expected `;`"))
-
+                        Err(_) => return Err(speculative.error("Expected `;`")),
                     };
                     input.advance_to(&speculative);
                     ret.push(Box::new(val));
@@ -129,30 +149,36 @@ impl Parse for IRExpr {
             input.advance_to(&speculative);
             return Ok(Self::Assign(assign));
         }
-        
-        'a:{
+        'a: {
             let speculative = input.fork();
-            let dest: Operand = match speculative.parse(){
+            let dest: Operand = match speculative.parse() {
                 Ok(val) => val,
-                _ => break 'a
+                _ => {
+                    break 'a
+                },
             };
-            let operation: BinaryOperation =  match speculative.parse(){
+            let operation: BinaryOperation = match speculative.parse() {
                 Ok(val) => val,
-                _ => break 'a
+                _ => break 'a,
             };
-            let _eq: Token![=] = match speculative.parse(){
+            let _eq: Token![=] = match speculative.parse() {
                 Ok(val) => val,
-                _ => break 'a
+                _ => break 'a,
             };
-            let operand : Operand = match speculative.parse(){
+            let operand: Operand = match speculative.parse() {
                 Ok(val) => val,
-                _ => break 'a
+                _ => break 'a,
             };
-            if !speculative.peek(Token![;]){
+            if !speculative.peek(Token![;]) {
                 break 'a;
             }
             input.advance_to(&speculative);
-            return Ok(Self::BinOp(BinOp { dest:dest.clone(), op: operation, lhs: dest, rhs: operand }))
+            return Ok(Self::BinOp(BinOp {
+                dest: dest.clone(),
+                op: operation,
+                lhs: dest,
+                rhs: operand,
+            }));
         }
 
         let speculative = input.fork();

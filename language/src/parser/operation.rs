@@ -8,10 +8,10 @@ use syn::{
 impl Parse for Assign {
     fn parse(input: ParseStream) -> Result<Self> {
         let dest: Operand = input.parse()?;
-        
+
         let _: Token![=] = input.parse()?;
         let rhs: Operand = input.parse()?;
-        if !input.peek(Token![;]){
+        if !input.peek(Token![;]) {
             return Err(input.error("Expected ;"));
         }
         Ok(Self { dest, rhs })
