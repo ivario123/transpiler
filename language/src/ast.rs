@@ -18,6 +18,7 @@ pub struct IR {
     pub extensions: Vec<Statement>,
 }
 
+
 #[derive(Debug, Clone)]
 /// Top level syntactical element.
 pub enum Statement {

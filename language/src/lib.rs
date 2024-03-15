@@ -37,4 +37,3 @@ impl<T> TranspilerState<T> {
         new_ident
     }
 }
-
