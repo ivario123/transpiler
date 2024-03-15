@@ -24,6 +24,7 @@ impl<T> CompilerState<T> {
             intermediate_counter: 0,
         }
     }
+
     fn intermediate(&mut self) -> Ident {
         let new_ident = format_ident!("intermediate_{}", self.intermediate_counter);
         self.to_declare.push(new_ident.clone());

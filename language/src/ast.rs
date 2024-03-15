@@ -6,7 +6,6 @@ pub mod operand;
 pub mod operations;
 use function::Function;
 use operations::{Assign, BinOp, UnOp};
-
 use syn::{Expr, Ident};
 
 use self::function::Jump;
@@ -19,7 +18,6 @@ pub struct IR {
     // pub extensions: Vec<IRExpr>,
     pub extensions: Vec<RustSyntax>,
 }
-
 
 #[derive(Debug, Clone)]
 /// Top level syntactical element.

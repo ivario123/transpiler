@@ -1,6 +1,7 @@
 //! Defines all AST types that are concern functions
-use super::{operand::Operand, operations::BinaryOperation};
 use syn::{Expr, Ident, Lit};
+
+use super::{operand::Operand, operations::BinaryOperation};
 
 #[derive(Debug, Clone)]
 /// Enumerates all supported function types

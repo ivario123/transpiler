@@ -4,13 +4,17 @@ pub mod operation;
 
 use std::collections::VecDeque;
 
-use crate::ast::operand::Operand;
-use crate::ast::*;
-use syn::parse::discouraged::Speculative;
-use syn::parse::{Parse, ParseStream};
-use syn::{parenthesized, Expr, Ident, Result, Token};
+use syn::{
+    parenthesized,
+    parse::{discouraged::Speculative, Parse, ParseStream},
+    Expr,
+    Ident,
+    Result,
+    Token,
+};
 
 use self::operations::{BinOp, BinaryOperation};
+use crate::ast::{operand::Operand, *};
 
 impl IR {
     fn parse_internal(input: ParseStream) -> Result<Self> {
@@ -72,19 +76,19 @@ impl Parse for RustSyntax {
             }
             let content;
             syn::braced!(content in input);
-            
-            let mut happy_case = Box::new(vec![]); 
+
+            let mut happy_case = Box::new(vec![]);
             while !content.is_empty() {
-                let further_values: RustSyntax = content.parse()?; 
+                let further_values: RustSyntax = content.parse()?;
                 happy_case.push(further_values);
             }
             let sad_case = if input.peek(Token![else]) {
                 let _: Token![else] = input.parse()?;
                 let content;
                 syn::braced!(content in input);
-                let mut sad_case = Box::new(vec![]); 
+                let mut sad_case = Box::new(vec![]);
                 while !content.is_empty() {
-                    let further_values: RustSyntax = content.parse()?; 
+                    let further_values: RustSyntax = content.parse()?;
                     sad_case.push(further_values);
                 }
                 Some(sad_case)
@@ -100,9 +104,9 @@ impl Parse for RustSyntax {
             let e: Expr = input.parse()?;
             let content;
             syn::braced!(content in input);
-            let mut block = Box::new(vec![]); 
+            let mut block = Box::new(vec![]);
             while !content.is_empty() {
-                let further_values: RustSyntax = content.parse()?; 
+                let further_values: RustSyntax = content.parse()?;
                 block.push(further_values);
             }
             return Ok(Self::For(var, e, block));
@@ -153,9 +157,7 @@ impl Parse for IRExpr {
             let speculative = input.fork();
             let dest: Operand = match speculative.parse() {
                 Ok(val) => val,
-                _ => {
-                    break 'a
-                },
+                _ => break 'a,
             };
             let operation: BinaryOperation = match speculative.parse() {
                 Ok(val) => val,

@@ -2,10 +2,11 @@ pub mod function;
 pub mod operand;
 pub mod operations;
 
-use crate::{ast::*, Compile, CompilerState};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::Ident;
+
+use crate::{ast::*, Compile, CompilerState};
 
 impl Into<TokenStream> for IR {
     fn into(self) -> TokenStream {
@@ -44,6 +45,7 @@ impl Into<TokenStream> for IR {
 
 impl Compile for IRExpr {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         match self {
             Self::Assign(assign) => assign.compile(state),
@@ -57,6 +59,7 @@ impl Compile for IRExpr {
 
 impl Compile for (Ident, RustSyntax) {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
         match self.1.clone() {
             RustSyntax::If(e, happy_case, Some(sad_case)) => {

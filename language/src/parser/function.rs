@@ -1,9 +1,14 @@
-use crate::ast::{function::*, operand::Operand, operations::BinaryOperation};
 use syn::{
     parse::{discouraged::Speculative, Parse, ParseStream, Result},
     spanned::Spanned,
-    Expr, Ident, Lit, LitStr, Token,
+    Expr,
+    Ident,
+    Lit,
+    LitStr,
+    Token,
 };
+
+use crate::ast::{function::*, operand::Operand, operations::BinaryOperation};
 impl Parse for Function {
     fn parse(input: ParseStream) -> Result<Self> {
         let speculative = input.fork();

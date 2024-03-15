@@ -5,6 +5,7 @@ use crate::{ast::operations::*, Compile};
 
 impl Compile for Assign {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         let dst: TokenStream = self.dest.compile(state);
         let rhs: TokenStream = self.rhs.compile(state);
@@ -19,6 +20,7 @@ impl Compile for Assign {
 
 impl Compile for UnOp {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         let dst: TokenStream = self.dest.compile(state);
         let rhs: TokenStream = self.rhs.compile(state);
@@ -38,6 +40,7 @@ impl Compile for UnOp {
 
 impl Compile for BinOp {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         let dst: TokenStream = self.dest.compile(state);
         let rhs: TokenStream = self.rhs.compile(state);

@@ -1,9 +1,11 @@
-use crate::{ast::operand::*, Compile};
 use proc_macro2::TokenStream;
 use quote::quote;
 
+use crate::{ast::operand::*, Compile};
+
 impl Compile for Operand {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         match self {
             Self::Expr(e) => e.compile(state),
@@ -14,6 +16,7 @@ impl Compile for Operand {
 }
 impl Compile for ExprOperand {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         match self {
             Self::Paren(p) => quote!((#p)),
@@ -39,6 +42,7 @@ impl Compile for ExprOperand {
 }
 impl Compile for IdentOperand {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         match self.define {
             true => state.to_declare.push(self.ident.clone()),
@@ -51,6 +55,7 @@ impl Compile for IdentOperand {
 
 impl Compile for DelimiterType {
     type Output = TokenStream;
+
     fn compile(&self, _state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         match self {
             Self::Const(l) => quote!(#l),
@@ -61,6 +66,7 @@ impl Compile for DelimiterType {
 
 impl Compile for FieldExtract {
     type Output = TokenStream;
+
     fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
         let intermediate1 = state.intermediate();
         let intermediate2 = state.intermediate();
@@ -79,11 +85,20 @@ impl Compile for FieldExtract {
                 }
             ),
             quote!(
-                #[allow(clippy::unnecessary_cast)] 
+                #[allow(clippy::unnecessary_cast)]
                 Operation::And {
                     destination: #intermediate2.clone(),
                     operand1: #intermediate1.clone(),
-                    operand2: Operand::Immidiate(((((0b1u64 << (#end as u64 - #start as u64 + 1u64)) as u64) - (1 as u64))as #ty).into() )
+                    operand2: Operand::Immidiate(
+                        (
+                            (
+                                (
+                                    (0b1u64 << (#end as u64 - #start as u64 + 1u64)) as u64
+                                ) - (1 as u64)
+                            )as #ty
+                        ).into()
+                    )
+
                 }
             ),
         ]);
