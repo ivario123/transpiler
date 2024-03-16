@@ -1,10 +1,15 @@
-use crate::ast::operand::*;
+//! Defines parsing rules for the ast [`Operands`](crate::ast::operand::Operand).
 use syn::{
     parenthesized,
     parse::{discouraged::Speculative, Parse, ParseStream, Result},
     token::Let,
-    Expr, Ident, Token, Type,
+    Expr,
+    Ident,
+    Token,
+    Type,
 };
+
+use crate::ast::operand::*;
 
 impl ExprOperand {
     fn parse_first_stage(input: ParseStream) -> Result<Self> {

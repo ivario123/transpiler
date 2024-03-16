@@ -1,17 +1,22 @@
+//! Defines transpiling rules for the ast [`Functions`](crate::ast::function::Function).
+
+use proc_macro2::TokenStream;
+use quote::quote;
+
 use crate::{
     ast::{
         function::*,
         operand::{IdentOperand, Operand},
-        operations::{BinOp, BinaryOperation},
+        operations::BinOp,
     },
-    Compile, CompilerState,
+    Compile,
+    TranspilerState,
 };
-use proc_macro2::TokenStream;
-use quote::quote;
 
 impl Compile for Function {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         match self {
             // This should not be managed by us
             Self::Ident(i, args) => quote! {#i(#(#args),*)},
@@ -22,7 +27,8 @@ impl Compile for Function {
 
 impl Compile for Intrinsic {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         match self {
             Self::ZeroExtend(z) => z.compile(state),
             Self::SignExtend(s) => s.compile(state),
@@ -43,7 +49,8 @@ impl Compile for Intrinsic {
 
 impl Compile for FunctionCall {
     type Output = TokenStream;
-    fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
         let f: TokenStream = self.ident.clone().compile(state);
         let args = self.args.clone();
         quote! {
@@ -54,7 +61,8 @@ impl Compile for FunctionCall {
 
 impl Compile for Signed {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let lhs = self.op1.clone();
         let rhs = self.op2.clone();
         let mut op = self.operation.clone();
@@ -79,7 +87,8 @@ impl Compile for Signed {
 
 impl Compile for LocalAddress {
     type Output = TokenStream;
-    fn compile(&self, _state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, _state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let name = self.name.clone();
         let bits = self.bits.clone();
         quote!(Operand::AddressInLocal(#name.to_owned(),#bits))
@@ -88,7 +97,8 @@ impl Compile for LocalAddress {
 
 impl Compile for Register {
     type Output = TokenStream;
-    fn compile(&self, _state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, _state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let name = self.name.clone();
         quote!(Operand::Register(#name.to_owned()))
     }
@@ -96,7 +106,8 @@ impl Compile for Register {
 
 impl Compile for Flag {
     type Output = TokenStream;
-    fn compile(&self, _state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, _state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let name = self.name.clone();
         quote!(Operand::Flag(#name.to_owned()))
     }
@@ -104,7 +115,8 @@ impl Compile for Flag {
 
 impl Compile for Jump {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let operand = self.target.clone().compile(state);
         match self.condtion.clone() {
             Some(condition) => {
@@ -119,7 +131,8 @@ impl Compile for Jump {
 
 impl Compile for SetNFlag {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let operand = self.operand.compile(state);
         quote!(Operation::SetNFlag( #operand ))
     }
@@ -127,7 +140,8 @@ impl Compile for SetNFlag {
 
 impl Compile for SetZFlag {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let operand = self.operand.compile(state);
         quote!(Operation::SetZFlag (#operand))
     }
@@ -135,7 +149,8 @@ impl Compile for SetZFlag {
 
 impl Compile for SetVFlag {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let operand1 = self.operand1.compile(state);
         let operand2 = self.operand2.compile(state);
         let carry = self.carry.clone();
@@ -147,7 +162,8 @@ impl Compile for SetVFlag {
 
 impl Compile for SetCFlag {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let operand1 = self.operand1.compile(state);
         let operand2 = self.operand2.compile(state);
         let carry = self.carry.clone();
@@ -157,9 +173,10 @@ impl Compile for SetCFlag {
     }
 }
 
-impl Compile for Resize{
+impl Compile for Resize {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let intermediate = state.intermediate();
         let operand = self.operand.compile(state);
         let bits = self.bits.clone();
@@ -173,7 +190,8 @@ impl Compile for Resize{
 
 impl Compile for SignExtend {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let intermediate = state.intermediate();
         let operand = self.operand.compile(state);
         let bits = self.bits.clone();
@@ -187,7 +205,8 @@ impl Compile for SignExtend {
 
 impl Compile for ZeroExtend {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let intermediate = state.intermediate();
         let operand = self.operand.compile(state);
         let bits = self.bits.clone();
@@ -201,7 +220,8 @@ impl Compile for ZeroExtend {
 
 impl Compile for Sra {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let intermediate = state.intermediate();
         let operand = self.operand.compile(state);
         let shift = self.n.clone();
@@ -214,7 +234,8 @@ impl Compile for Sra {
 }
 impl Compile for Ror {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         let intermediate = state.intermediate();
         let operand = self.operand.compile(state);
         let shift = self.n.clone();

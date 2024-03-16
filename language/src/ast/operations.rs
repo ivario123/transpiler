@@ -1,3 +1,5 @@
+//! Defines the supported arithmetic operations.
+
 use super::operand::Operand;
 
 /// A generic operation,
@@ -7,7 +9,9 @@ use super::operand::Operand;
 /// let a = b + c + d;
 /// ```
 pub enum Operation {
+    /// A binary operation.
     BinOp(Operand, BinaryOperation, Operand),
+    /// A unary operation.
     UnOp(UnaryOperation, Operand),
 }
 
@@ -16,6 +20,7 @@ pub enum Operation {
 /// This is merely a type-level denotation of
 /// operations such as + or -.
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub enum BinaryOperation {
     Sub,
     SSub,
@@ -38,6 +43,7 @@ pub enum BinaryOperation {
 /// This is merely a type-level denotation of
 /// operations such as !.
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub enum UnaryOperation {
     BitwiseNot,
 }
@@ -50,7 +56,10 @@ pub enum UnaryOperation {
 /// ```
 #[derive(Debug, Clone)]
 pub struct Assign {
+    /// Where to store the rhs.
     pub dest: Operand,
+    /// The value to be copied in to the
+    /// destination.
     pub rhs: Operand,
 }
 
@@ -62,8 +71,11 @@ pub struct Assign {
 /// ```
 #[derive(Debug, Clone)]
 pub struct UnOp {
+    /// Where to store the result.
     pub dest: Operand,
+    /// What operation to apply.
     pub op: UnaryOperation,
+    /// The operand to apply the operation to.
     pub rhs: Operand,
 }
 
@@ -75,24 +87,29 @@ pub struct UnOp {
 /// ```
 #[derive(Debug, Clone)]
 pub struct BinOp {
+    /// Where to store the result.
     pub dest: Operand,
+    /// Which operation to apply.
     pub op: BinaryOperation,
+    /// The lhs of the operation.
     pub lhs: Operand,
+    /// The rhs of the operation.
     pub rhs: Operand,
 }
 
 impl BinaryOperation {
+    /// Converts the operation to be signed.
     pub fn signed(&mut self) {
         *self = match &self {
-            Self::Sub => Self::SSub,
-            Self::Add => Self::SAdd,
             Self::UDiv => Self::SDiv,
             e => (*e).clone(),
         };
     }
 }
+
 impl BinOp {
-    pub fn signed(&mut self)  {
+    /// Converts the operation to be signed.
+    pub fn signed(&mut self) {
         self.op.signed();
     }
 }

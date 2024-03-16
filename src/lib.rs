@@ -7,11 +7,31 @@ use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
 #[proc_macro]
+/// Extends or creates a vector of [`general_assembly`] operations.
+/// 
+/// Usage:
+/// ```
+/// use general_assembly::{operation::Operation,operand::Operand,condition::Condition};
+/// use transpiler::pseudo;
+/// 
+/// let a = Operand::Register("a".to_owned());
+/// let b = Operand::Register("b".to_owned());
+/// let c = Operand::Local("c".to_owned());
+/// let cond = false;
+/// let ret = pseudo!([
+///     c = a+b;
+///     let d = a ^ b;
+///     
+///     if(cond) {
+///         d = a | b;
+///     }
+///     
+///     c = d;
+///     Jump(c);
+/// ]);
+/// ```
 pub fn pseudo(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as IR);
-    // println!("IR : {input:?}");
     let input: proc_macro2::TokenStream = input.into();
-    // println!("Output \n{input}");
-
     input.into()
 }

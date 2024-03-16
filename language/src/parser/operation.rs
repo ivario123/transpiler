@@ -1,17 +1,22 @@
-use crate::ast::operand::Operand;
-use crate::ast::operations::{Assign, BinOp, BinaryOperation, UnOp, UnaryOperation};
-use syn::parse::discouraged::Speculative;
+//! Defines parsing rules for the ast
+//! [`Operations`](crate::ast::operations::Operation).
 use syn::{
-    parse::{Parse, ParseStream, Result},
-    Ident, Token,
+    parse::{discouraged::Speculative, Parse, ParseStream, Result},
+    Ident,
+    Token,
+};
+
+use crate::ast::{
+    operand::Operand,
+    operations::{Assign, BinOp, BinaryOperation, UnOp, UnaryOperation},
 };
 impl Parse for Assign {
     fn parse(input: ParseStream) -> Result<Self> {
         let dest: Operand = input.parse()?;
-        
+
         let _: Token![=] = input.parse()?;
         let rhs: Operand = input.parse()?;
-        if !input.peek(Token![;]){
+        if !input.peek(Token![;]) {
             return Err(input.error("Expected ;"));
         }
         Ok(Self { dest, rhs })
@@ -116,7 +121,8 @@ impl Parse for BinaryOperation {
                 return Ok(ArithmeticRightShift);
             } else {
                 todo!()
-                // compile_error!("Expected \"Adc\" found {:}",ident.to_string());
+                // compile_error!("Expected \"Adc\" found
+                // {:}",ident.to_string());
             }
         }
         Err(input.error("Expected operation"))

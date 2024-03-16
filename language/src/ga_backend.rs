@@ -1,11 +1,15 @@
+//! Defines a simple backed to transpile the [`ast`](crate::ast)
+//! into [`Operations`](general_assembly::operation::Operation).
+
 pub mod function;
 pub mod operand;
 pub mod operations;
 
-use crate::{ast::*, Compile, CompilerState};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::Ident;
+
+use crate::{ast::*, Compile, TranspilerState};
 
 impl Into<TokenStream> for IR {
     fn into(self) -> TokenStream {
@@ -13,7 +17,7 @@ impl Into<TokenStream> for IR {
         // self.extensions
         //     .iter()
         //     .for_each(|el| el.declare(&mut declerations));
-        let mut state = CompilerState::new();
+        let mut state = TranspilerState::new();
         let ret = self.ret.clone().unwrap_or(format_ident!("ret"));
         let ext = self
             .extensions
@@ -44,51 +48,63 @@ impl Into<TokenStream> for IR {
 
 impl Compile for IRExpr {
     type Output = TokenStream;
-    fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
         match self {
             Self::Assign(assign) => assign.compile(state),
             Self::UnOp(unop) => unop.compile(state),
             Self::BinOp(binop) => binop.compile(state),
             Self::Function(f) => f.compile(state),
-            Self::Jump(j) => j.compile(state),                
+            Self::Jump(j) => j.compile(state),
         }
     }
 }
 
-impl Compile for (Ident, RustSyntax) {
+impl Compile for (Ident, Statement) {
     type Output = TokenStream;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output {
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
         match self.1.clone() {
-            RustSyntax::If(e, happy_case, Some(sad_case)) => {
+            Statement::If(e, happy_case, Some(sad_case)) => {
                 let to_declare_global: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_global = to_declare_global.iter().map(|el| el.to_string());
 
-                let happy_case = (self.0.clone(), *happy_case).compile(state);
+                let happy_case: Vec<TokenStream> = (*happy_case)
+                    .into_iter()
+                    .map(|el| (self.0.clone(), el).compile(state))
+                    .collect();
                 let to_declare_happy: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_happy = to_declare_happy.iter().map(|el| el.to_string());
 
-                let sad_case = (self.0.clone(), *sad_case).compile(state);
+                let sad_case: Vec<TokenStream> = (*sad_case)
+                    .into_iter()
+                    .map(|el| (self.0.clone(), el).compile(state))
+                    .collect();
                 let to_declare_sad: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_sad = to_declare_sad.iter().map(|el| el.to_string());
+
                 quote!(
                     #(let #to_declare_global =
                         Operand::Local(#declaration_strings_global.to_owned());)*
                     if #e {
                         #(let #to_declare_happy =
                             Operand::Local(#declaration_strings_happy.to_owned());)*
-                        #happy_case;
+                        #(#happy_case;)*
                     } else {
                         #(let #to_declare_sad =
                             Operand::Local(#declaration_strings_sad.to_owned());)*
-                        #sad_case;
+                        #(#sad_case;)*
                     }
                 )
             }
-            RustSyntax::If(e, happy_case, None) => {
+            Statement::If(e, happy_case, None) => {
                 let to_declare_global: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_global = to_declare_global.iter().map(|el| el.to_string());
 
-                let happy_case = (self.0.clone(), *happy_case).compile(state);
+                let happy_case: Vec<TokenStream> = (*happy_case)
+                    .into_iter()
+                    .map(|el| (self.0.clone(), el).compile(state))
+                    .collect();
                 let to_declare_happy: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_happy = to_declare_happy.iter().map(|el| el.to_string());
                 quote!(
@@ -97,14 +113,17 @@ impl Compile for (Ident, RustSyntax) {
                     if #e {
                         #(let #to_declare_happy =
                             Operand::Local(#declaration_strings_happy.to_owned());)*
-                        #happy_case;
+                        #(#happy_case;)*
                     }
                 )
             }
-            RustSyntax::For(i, e, block) => {
+            Statement::For(i, e, block) => {
                 let to_declare_global: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_global = to_declare_global.iter().map(|el| el.to_string());
-                let block = (self.0.clone(), *block).compile(state);
+                let block: Vec<TokenStream> = (*block)
+                    .into_iter()
+                    .map(|el| (self.0.clone(), el).compile(state))
+                    .collect();
                 let to_declare_inner: Vec<Ident> = state.to_declare.drain(..).collect();
                 let declaration_strings_inner = to_declare_inner.iter().map(|el| el.to_string());
                 quote!(
@@ -113,11 +132,11 @@ impl Compile for (Ident, RustSyntax) {
                     for #i in #e {
                         #(let #to_declare_inner =
                             Operand::Local(#declaration_strings_inner.to_owned());)*
-                        #block
+                        #(#block;)*
                     }
                 )
             }
-            RustSyntax::Exprs(extensions) => {
+            Statement::Exprs(extensions) => {
                 let mut ext = Vec::new();
                 for el in extensions {
                     ext.push(el.compile(state));
@@ -135,7 +154,7 @@ impl Compile for (Ident, RustSyntax) {
                 ])
                 )
             }
-            RustSyntax::RustExpr(_) => todo!(),
+            Statement::RustExpr(_) => todo!(),
         }
     }
 }
