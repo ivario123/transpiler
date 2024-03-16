@@ -147,11 +147,6 @@ let ret = pseudo!([
 
 </details>
 
-## Contributing
-
-If you find this project interesting and or useful feel free to contribute by either finding an open issue in the [issue tracker](https://github.com/ivario123/transpiler/issues) or opening a [`PR`](https://github.com/ivario123/transpiler/pulls) with fixes or features that you find useful.
-Before contributing you should read the short [documentation](./CONTRIBUTING.md) on contributions.
-
 ## License
 
 This repository is licensed under the [MIT](./LICENSE) license and any contributions shall be licensed under the same license unless explicitly stated otherwise.
