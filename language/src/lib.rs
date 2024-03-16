@@ -1,3 +1,7 @@
+//! Defines the an intermediate language used to define a vector of [`Operation`](general_assembly::Operation)s.
+#![deny(clippy::all)]
+#![deny(missing_docs)]
+#![deny(rustdoc::all)]
 pub mod ast;
 pub mod ga_backend;
 pub mod parser;
@@ -5,18 +9,19 @@ pub mod parser;
 use quote::format_ident;
 use syn::Ident;
 
-struct CompilerState<T> {
+struct TranspilerState<T> {
     to_declare: Vec<Ident>,
     to_insert_above: Vec<T>,
     intermediate_counter: usize,
 }
 
+
 trait Compile {
     type Output;
-    fn compile(&self, state: &mut CompilerState<Self::Output>) -> Self::Output;
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output;
 }
 
-impl<T> CompilerState<T> {
+impl<T> TranspilerState<T> {
     fn new() -> Self {
         Self {
             to_declare: Vec::new(),

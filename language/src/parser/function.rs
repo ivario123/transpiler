@@ -1,6 +1,6 @@
+//! Defines parsing rules for the ast [`Functions`](crate::ast::function::Function).
 use syn::{
     parse::{discouraged::Speculative, Parse, ParseStream, Result},
-    spanned::Spanned,
     Expr,
     Ident,
     Lit,
@@ -404,7 +404,6 @@ impl Parse for SetCFlag {
         let _: Token![,] = content.parse()?;
 
         let (sub, carry) = if content.peek(Ident) {
-            println!("Parsing a cool new thing");
             // Now we can support ADC, SUB, SBC, ADD
             let ident: Ident = content.parse()?;
             let f = Lit::Bool(syn::LitBool {

@@ -1,8 +1,8 @@
+//! Defines the parsing rules for the [`ast`](crate::ast).
+
 pub mod function;
 pub mod operand;
 pub mod operation;
-
-use std::collections::VecDeque;
 
 use syn::{
     parenthesized,
@@ -38,7 +38,7 @@ impl IR {
         let content;
         syn::bracketed!(content in input);
 
-        let mut extensions: Vec<RustSyntax> = vec![];
+        let mut extensions: Vec<Statement> = vec![];
         while !content.is_empty() {
             extensions.push(content.parse()?);
         }
@@ -61,7 +61,7 @@ impl Parse for IR {
         Ok(ret)
     }
 }
-impl Parse for RustSyntax {
+impl Parse for Statement {
     fn parse(input: ParseStream) -> Result<Self> {
         if input.peek(Token![if]) {
             let _: Token![if] = input.parse()?;
@@ -79,7 +79,7 @@ impl Parse for RustSyntax {
 
             let mut happy_case = Box::new(vec![]);
             while !content.is_empty() {
-                let further_values: RustSyntax = content.parse()?;
+                let further_values: Statement = content.parse()?;
                 happy_case.push(further_values);
             }
             let sad_case = if input.peek(Token![else]) {
@@ -88,7 +88,7 @@ impl Parse for RustSyntax {
                 syn::braced!(content in input);
                 let mut sad_case = Box::new(vec![]);
                 while !content.is_empty() {
-                    let further_values: RustSyntax = content.parse()?;
+                    let further_values: Statement = content.parse()?;
                     sad_case.push(further_values);
                 }
                 Some(sad_case)
@@ -106,7 +106,7 @@ impl Parse for RustSyntax {
             syn::braced!(content in input);
             let mut block = Box::new(vec![]);
             while !content.is_empty() {
-                let further_values: RustSyntax = content.parse()?;
+                let further_values: Statement = content.parse()?;
                 block.push(further_values);
             }
             return Ok(Self::For(var, e, block));

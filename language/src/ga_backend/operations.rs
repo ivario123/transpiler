@@ -1,3 +1,4 @@
+//! Defines transpiling rules for the ast [`Operations`](crate::ast::operations::Operation).
 use proc_macro2::TokenStream;
 use quote::quote;
 
@@ -6,7 +7,7 @@ use crate::{ast::operations::*, Compile};
 impl Compile for Assign {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
+    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
         let dst: TokenStream = self.dest.compile(state);
         let rhs: TokenStream = self.rhs.compile(state);
         let to_insert = state.to_insert_above.drain(..);
@@ -21,7 +22,7 @@ impl Compile for Assign {
 impl Compile for UnOp {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
+    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
         let dst: TokenStream = self.dest.compile(state);
         let rhs: TokenStream = self.rhs.compile(state);
         let ret = match self.op {
@@ -41,7 +42,7 @@ impl Compile for UnOp {
 impl Compile for BinOp {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::CompilerState<Self::Output>) -> Self::Output {
+    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
         let dst: TokenStream = self.dest.compile(state);
         let rhs: TokenStream = self.rhs.compile(state);
         let lhs: TokenStream = self.lhs.compile(state);

@@ -1,3 +1,5 @@
+//! Defines parsing rules for the ast
+//! [`Operations`](crate::ast::operations::Operation).
 use syn::{
     parse::{discouraged::Speculative, Parse, ParseStream, Result},
     Ident,
