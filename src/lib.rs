@@ -8,12 +8,12 @@ use syn::parse_macro_input;
 
 #[proc_macro]
 /// Extends or creates a vector of [`general_assembly`] operations.
-/// 
+///
 /// Usage:
 /// ```
 /// use general_assembly::{operation::Operation,operand::Operand,condition::Condition};
 /// use transpiler::pseudo;
-/// 
+///
 /// let a = Operand::Register("a".to_owned());
 /// let b = Operand::Register("b".to_owned());
 /// let c = Operand::Local("c".to_owned());

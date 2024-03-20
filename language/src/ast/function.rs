@@ -1,5 +1,4 @@
-//! Defines all AST types that concern functions
-use general_assembly::operation::Operation;
+//! Defines all AST types that concern functions.
 use syn::{Expr, Ident, Lit};
 
 use super::{operand::Operand, operations::BinaryOperation};
