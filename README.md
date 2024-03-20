@@ -188,6 +188,8 @@ let ret = pseudo!([
 
 </details>
 
+for a more detailed look at the language features please read the [language documentation](./language/README.md)
+
 ## License
 
 This repository is licensed under the [MIT](./LICENSE) license and any contributions shall be licensed under the same license unless explicitly stated otherwise.
