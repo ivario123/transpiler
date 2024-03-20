@@ -1,4 +1,5 @@
-//! Defines transpiling rules for the ast [`Functions`](crate::ast::function::Function).
+//! Defines transpiling rules for the ast
+//! [`Functions`](crate::ast::function::Function).
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -38,6 +39,7 @@ impl Compile for Intrinsic {
             Self::LocalAddress(a) => a.compile(state),
             Self::SetVFlag(f) => f.compile(state),
             Self::SetCFlag(f) => f.compile(state),
+            Self::SetCFlagRot(f) => f.compile(state),
             Self::Flag(f) => f.compile(state),
             Self::Register(r) => r.compile(state),
             Self::Ror(r) => r.compile(state),
@@ -156,7 +158,49 @@ impl Compile for SetVFlag {
         let carry = self.carry.clone();
         let sub = self.sub.clone();
 
-        quote!(Operation::SetCFlag { operand1: #operand1, operand2: #operand2, carry: #carry, sub: #sub })
+        quote!(Operation::SetVFlag { operand1: #operand1, operand2: #operand2, carry: #carry, sub: #sub })
+    }
+}
+
+impl Compile for SetCFlagRot {
+    type Output = TokenStream;
+
+    fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output {
+        let operand1 = self.operand1.compile(state);
+        if self.rotation == Rotation::Ror {
+            return quote!(
+                Operation::SetCFlagRor(#operand1)
+            );
+        }
+        let operand2 = self
+            .operand2
+            .clone()
+            .expect("Parser is broken")
+            .compile(state);
+
+        match self.rotation {
+            Rotation::Lsl => quote!(
+                Operation::SetCFlagShiftLeft{
+                    operand:#operand1,
+                    shift:#operand2
+                }
+            ),
+            Rotation::Rsl => quote!(
+                Operation::SetCFlagSrl{
+                    operand:#operand1,
+                    shift:#operand2
+                }
+            ),
+            Rotation::Rsa => quote!(
+                Operation::SetCFlagSra{
+                    operand:#operand1,
+                    shift:#operand2
+                }
+            ),
+            Rotation::Ror => quote!(
+                Operation::SetCFlagRor(#operand1)
+            ),
+        }
     }
 }
 
@@ -169,7 +213,7 @@ impl Compile for SetCFlag {
         let carry = self.carry.clone();
         let sub = self.sub.clone();
 
-        quote!(Operation::SetVFlag { operand1: #operand1, operand2: #operand2, carry: #carry, sub: #sub })
+        quote!(Operation::SetCFlag { operand1: #operand1, operand2: #operand2, carry: #carry, sub: #sub })
     }
 }
 

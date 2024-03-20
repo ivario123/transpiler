@@ -14,11 +14,12 @@ pub enum Operand {
     /// Field extraction.
     FieldExtract(FieldExtract),
 }
+
 #[derive(Debug, Clone)]
 /// Enumerates a set of different operands.
 ///
 /// These operands are not new identifiers but can be already defined
-/// [`Ident`]ifiers.
+/// [`Ident`](struct@Ident)ifiers.
 pub enum ExprOperand {
     /// A parenthesis containing an ordinary rust expression.
     ///
@@ -37,6 +38,7 @@ pub enum ExprOperand {
     /// function.
     FunctionCall(Function),
 }
+
 /// A (possibly) new identifier.
 #[derive(Debug, Clone)]
 pub struct IdentOperand {

@@ -1,7 +1,10 @@
-//! Defines the an intermediate language used to define a vector of [`Operation`](general_assembly::Operation)s.
+//! Defines the an intermediate language used to define a vector of
+//! [`Operation`](general_assembly::operation::Operation)s.
+
 #![deny(clippy::all)]
 #![deny(missing_docs)]
 #![deny(rustdoc::all)]
+
 pub mod ast;
 pub mod ga_backend;
 pub mod parser;
@@ -14,7 +17,6 @@ struct TranspilerState<T> {
     to_insert_above: Vec<T>,
     intermediate_counter: usize,
 }
-
 
 trait Compile {
     type Output;

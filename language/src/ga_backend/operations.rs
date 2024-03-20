@@ -1,4 +1,5 @@
-//! Defines transpiling rules for the ast [`Operations`](crate::ast::operations::Operation).
+//! Defines transpiling rules for the ast
+//! [`Operations`](crate::ast::operations::Operation).
 use proc_macro2::TokenStream;
 use quote::quote;
 
