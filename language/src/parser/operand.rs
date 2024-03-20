@@ -1,4 +1,5 @@
-//! Defines parsing rules for the ast [`Operands`](crate::ast::operand::Operand).
+//! Defines parsing rules for the ast
+//! [`Operands`](crate::ast::operand::Operand).
 use syn::{
     parenthesized,
     parse::{discouraged::Speculative, Parse, ParseStream, Result},

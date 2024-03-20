@@ -1,4 +1,5 @@
-//! Defines parsing rules for the ast [`Functions`](crate::ast::function::Function).
+//! Defines parsing rules for the ast
+//! [`Functions`](crate::ast::function::Function).
 use syn::{
     parse::{discouraged::Speculative, Parse, ParseStream, Result},
     Expr,
@@ -385,6 +386,53 @@ impl Parse for SetZFlag {
             return Err(content.error("Too many arguments"));
         }
         Ok(Self { operand: op })
+    }
+}
+impl Parse for SetCFlagRot {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let speculative = input.fork();
+        let ident: Ident = speculative.parse()?;
+        if ident.to_string().to_lowercase() != "setcflag".to_owned() {
+            return Err(input.error("Expected setcflag"));
+        }
+        input.advance_to(&speculative);
+        let content;
+        syn::parenthesized!(content in input);
+        let op1: Operand = content.parse()?;
+        let _: Token![,] = content.parse()?;
+
+        if content.peek2(Token![,]) {
+            let op2: Operand = content.parse()?;
+
+            let _: Token![,] = content.parse()?;
+
+            let shift = {
+                let ident: Ident = content.parse()?;
+                match ident.to_string().to_lowercase().as_str() {
+                    "lsl" => Rotation::Lsl,
+                    "rsl" => Rotation::Rsl,
+                    "rsa" => Rotation::Rsa,
+                    _ => return Err(content.error("Expected, \"lsl, rsl, rsa\"")),
+                }
+            };
+            return Ok(Self {
+                operand1: op1,
+                operand2: Some(op2),
+                rotation: shift,
+            });
+        }
+        let shift = {
+            let ident: Ident = content.parse()?;
+            match ident.to_string().to_lowercase().as_str() {
+                "ror" => Rotation::Ror,
+                _ => return Err(content.error("Expected, \"lsl, rsl, rsa,ror\"")),
+            }
+        };
+        return Ok(Self {
+            operand1: op1,
+            operand2: None,
+            rotation: shift,
+        });
     }
 }
 impl Parse for SetCFlag {

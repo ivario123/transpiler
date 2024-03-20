@@ -1,4 +1,4 @@
-//! Defines all AST types that concern functions
+//! Defines all AST types that concern functions.
 use syn::{Expr, Ident, Lit};
 
 use super::{operand::Operand, operations::BinaryOperation};
@@ -65,6 +65,9 @@ pub enum Intrinsic {
     /// Sets the carry flag based on the operands and the operations applied.
     SetCFlag(SetCFlag),
 
+    /// Sets the carry flag based on the operands and the operations applied.
+    SetCFlagRot(SetCFlagRot),
+
     /// One time use operand that is a
     /// [`Flag`](general_assembly::operand::Operand::Flag)
     Flag(Flag),
@@ -98,7 +101,7 @@ pub struct Jump {
 }
 
 #[derive(Debug, Clone)]
-/// Converts the [`BinOp`](super::operation::Operation) contained with to
+/// Converts the [`BinOp`](super::operations::Operation) contained with to
 /// its signed equivalent.
 pub struct Signed {
     /// The lhs of the operation.
@@ -180,6 +183,28 @@ pub struct SetNFlag {
 pub struct SetZFlag {
     /// The operand for which the flag will be set.
     pub operand: Operand,
+}
+
+// TODO! Remove this once it is not needed any more.
+#[derive(Debug, Clone, PartialEq)]
+#[allow(missing_docs)]
+pub enum Rotation {
+    Lsl,
+    Rsl,
+    Rsa,
+    Ror,
+    // Rrx
+}
+// TODO! Remove this once it is not needed any more.
+#[derive(Debug, Clone)]
+/// Sets the carry flag for the specified operation.
+pub struct SetCFlagRot {
+    /// The lhs of the operation.
+    pub operand1: Operand,
+    /// The rhs of the operation.
+    pub operand2: Option<Operand>,
+    /// The operation to set the flag for.
+    pub rotation: Rotation,
 }
 
 #[derive(Debug, Clone)]

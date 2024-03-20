@@ -154,7 +154,6 @@ impl Compile for (Ident, Statement) {
                 ])
                 )
             }
-            Statement::RustExpr(_) => todo!(),
         }
     }
 }

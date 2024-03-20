@@ -2,10 +2,50 @@
   Symex General Assembly Transpiler
 </h1>
 
-This repository defines a small DSL used to define [symex](github.com/s7rul/symex) general_assembly instructions
-in a cleaner and shorter manner rather than writing out struct by hand. This crate only makes sense in the context of Symex as of now.
+This repository defines a small DSL used to define [symex](github.com/s7rul/symex) general_assembly instructions more cleanly and shortly rather than writing out struct by hand. This crate only makes sense in the context of Symex as of now.
 
 ## Usage
+
+<details><summary>:warning:  **All declarations are inserted before the start of the most recent block** </summary>
+
+   This means that the code
+
+   ```rust
+   pseudo!([
+        let a = b + c;
+   ])
+   ```
+
+   inserts the declaration of `a` right above the call to `pseudo`
+   while the code
+
+   ```rust
+   let s = false;
+   pseudo!([
+    let a = b + c;
+    if (s) {
+        let d = a + c;
+    }
+   ])
+   ```
+
+   inserts the declaration of `d` inside the generated `if` statement.
+    Finally, code like
+
+   ```rust
+   let s = false;
+   pseudo!([
+    let a = b + c;
+    if (s) {
+        let d = a + c;
+    }
+    let f = d;
+   ])
+   ```
+
+   inserts the declaration of `f` right after the `if` block ends.
+   This allows scoping of variables but not shadowing of variables.
+</details>
 
 ### Examples
 
@@ -63,6 +103,7 @@ pseudo!(ret.extend[
     }
 ]);
 ```
+
 </details>
 
 <details>
@@ -146,6 +187,8 @@ let ret = pseudo!([
 ```
 
 </details>
+
+for a more detailed look at the language features please read the [language documentation](./language/README.md)
 
 ## License
 

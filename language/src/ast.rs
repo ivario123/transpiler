@@ -34,8 +34,6 @@ pub enum Statement {
     For(Ident, Expr, Box<Vec<Statement>>),
     /// A collection of [`IRExpr`]s.
     Exprs(Vec<Box<IRExpr>>),
-    /// Allow inline rust expressions.
-    RustExpr(Expr),
 }
 
 #[derive(Debug, Clone)]
