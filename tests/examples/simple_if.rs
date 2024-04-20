@@ -11,10 +11,10 @@ fn main() {
         let d = a ^ b;
         // d = a + d;
         if(cond) {
-            d = a | b;
+            // d = a | b;
         }
 
-        c = d;
+        // c = d;
         Jump(c);
     ]);
 }
