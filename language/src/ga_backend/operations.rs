@@ -3,29 +3,34 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::{ast::operations::*, Compile};
+use crate::{ast::operations::*, Compile, CompileUnchecked, Error};
 
 impl Compile for Assign {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
-        let dst: TokenStream = self.dest.compile(state);
-        let rhs: TokenStream = self.rhs.compile(state);
+    fn compile(
+        &self,
+        state: &mut crate::TranspilerState<Self::Output>,
+    ) -> Result<Self::Output, Error> {
+        let dst: TokenStream = self.dest.compile(state)?;
+        let rhs: TokenStream = self.rhs.compile(state)?;
         let to_insert = state.to_insert_above.drain(..);
-        quote! {
+        Ok(quote! {
             #(#to_insert,)*
             Operation::Move { destination: #dst, source: #rhs }
-        }
-        .into()
+        })
     }
 }
 
 impl Compile for UnOp {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
-        let dst: TokenStream = self.dest.compile(state);
-        let rhs: TokenStream = self.rhs.compile(state);
+    fn compile(
+        &self,
+        state: &mut crate::TranspilerState<Self::Output>,
+    ) -> Result<Self::Output, Error> {
+        let dst: TokenStream = self.dest.compile(state)?;
+        let rhs: TokenStream = self.rhs.compile(state)?;
         let ret = match self.op {
             UnaryOperation::BitwiseNot => quote!(
                 Operation::Not { destination: #dst, operand: #rhs }
@@ -33,20 +38,23 @@ impl Compile for UnOp {
         };
 
         let to_insert = state.to_insert_above.drain(..);
-        quote!(
+        Ok(quote!(
         #(#to_insert,)*
         #ret
-        )
+        ))
     }
 }
 
 impl Compile for BinOp {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
-        let dst: TokenStream = self.dest.compile(state);
-        let rhs: TokenStream = self.rhs.compile(state);
-        let lhs: TokenStream = self.lhs.compile(state);
+    fn compile(
+        &self,
+        state: &mut crate::TranspilerState<Self::Output>,
+    ) -> Result<Self::Output, Error> {
+        let dst: TokenStream = self.dest.compile(state)?;
+        let rhs: TokenStream = self.rhs.compile(state)?;
+        let lhs: TokenStream = self.lhs.compile(state)?;
         let ret = match self.op {
             BinaryOperation::Sub => quote!(
                         Operation::Sub {
@@ -148,9 +156,9 @@ impl Compile for BinOp {
             ),
         };
         let to_insert = state.to_insert_above.drain(..);
-        quote!(
+        Ok(quote!(
         #(#to_insert,)*
         #ret
-        )
+        ))
     }
 }

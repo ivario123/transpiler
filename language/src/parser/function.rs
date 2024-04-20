@@ -83,6 +83,12 @@ impl Parse for Intrinsic {
         let speculative = input.fork();
         if let Ok(el) = speculative.parse() {
             input.advance_to(&speculative);
+            return Ok(Self::SetCFlagRot(el));
+        }
+
+        let speculative = input.fork();
+        if let Ok(el) = speculative.parse() {
+            input.advance_to(&speculative);
             return Ok(Self::SetVFlag(el));
         }
 
@@ -425,14 +431,14 @@ impl Parse for SetCFlagRot {
             let ident: Ident = content.parse()?;
             match ident.to_string().to_lowercase().as_str() {
                 "ror" => Rotation::Ror,
-                _ => return Err(content.error("Expected, \"lsl, rsl, rsa,ror\"")),
+                _ => return Err(content.error("Expected, \"ror\"")),
             }
         };
-        return Ok(Self {
+        Ok(Self {
             operand1: op1,
             operand2: None,
             rotation: shift,
-        });
+        })
     }
 }
 impl Parse for SetCFlag {

@@ -9,7 +9,7 @@ fn main() {
     let cond = false;
     let ret = pseudo!([
         let d = a ^ b;
-
+        // d = a + d;
         if(cond) {
             d = a | b;
         }

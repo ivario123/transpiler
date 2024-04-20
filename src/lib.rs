@@ -32,6 +32,14 @@ use syn::parse_macro_input;
 /// ```
 pub fn pseudo(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as IR);
-    let input: proc_macro2::TokenStream = input.into();
-    input.into()
+    let input: proc_macro2::TokenStream = match input.into() {
+        Ok(val) => val,
+        Err(e) => panic!("{:?}", e),
+    };
+    let ret = input.into();
+
+    // println!("Ret : \n {ret}");
+
+    ret
+
 }

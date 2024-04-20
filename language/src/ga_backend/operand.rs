@@ -3,12 +3,15 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::{ast::operand::*, Compile};
+use crate::{ast::operand::*, Compile, Error};
 
 impl Compile for Operand {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
+    fn compile(
+        &self,
+        state: &mut crate::TranspilerState<Self::Output>,
+    ) -> Result<Self::Output, Error> {
         match self {
             Self::Expr(e) => e.compile(state),
             Self::Ident(i) => i.compile(state),
@@ -19,63 +22,83 @@ impl Compile for Operand {
 impl Compile for ExprOperand {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
-        match self {
+    fn compile(
+        &self,
+        state: &mut crate::TranspilerState<Self::Output>,
+    ) -> Result<Self::Output, Error> {
+        Ok(match self {
             Self::Paren(p) => quote!((#p)),
             Self::Chain(i, it) => {
-                let ident: TokenStream = (*i).compile(state);
-                let ops: Vec<TokenStream> = it
-                    .into_iter()
-                    .map(|(ident, args)| {
-                        let args = args
-                            .into_iter()
-                            .map(|el| (*el).compile(state))
-                            .collect::<Vec<TokenStream>>();
-                        quote!(#ident(#(#args),*))
-                    })
-                    .collect();
+                let ident: TokenStream = (*i).compile(state)?;
+                let mut ops: Vec<TokenStream> = Vec::new();
+                for (ident, args) in it {
+                    let mut args_ret = Vec::with_capacity(args.len());
+                    for arg in args {
+                        let arg = arg.compile(state)?;
+                        args_ret.push(arg);
+                    }
+                    ops.push(quote!(#ident(#(#args_ret),*)));
+                }
                 quote!(#ident.#(#ops).*)
             }
-            Self::Ident(i) => quote!(#i.clone()),
+            Self::Ident(i) => {
+                state.access(i.clone());
+                quote!(#i.clone())
+            }
             Self::Literal(l) => quote!(#l),
-            Self::FunctionCall(f) => f.compile(state),
-        }
+            Self::FunctionCall(f) => f.compile(state)?,
+        })
     }
 }
 impl Compile for IdentOperand {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
+    fn compile(
+        &self,
+        state: &mut crate::TranspilerState<Self::Output>,
+    ) -> Result<Self::Output, Error> {
         match self.define {
-            true => state.to_declare.push(self.ident.clone()),
-            false => {}
+            true => state.declare_local(self.ident.clone()),
+            false => {
+                state.access(self.ident.clone());
+            }
         };
         let ident = self.ident.clone();
-        quote!(#ident.clone())
+        Ok(quote!(#ident.clone()))
     }
 }
 
 impl Compile for DelimiterType {
     type Output = TokenStream;
 
-    fn compile(&self, _state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
-        match self {
+    fn compile(
+        &self,
+        state: &mut crate::TranspilerState<Self::Output>,
+    ) -> Result<Self::Output, Error> {
+        Ok(match self {
             Self::Const(l) => quote!(#l),
-            Self::Ident(i) => quote!(#i),
-        }
+            Self::Ident(i) => {
+                state.access(i.clone());
+                quote!(#i)
+            }
+        })
     }
 }
 
 impl Compile for FieldExtract {
     type Output = TokenStream;
 
-    fn compile(&self, state: &mut crate::TranspilerState<Self::Output>) -> Self::Output {
-        let intermediate1 = state.intermediate();
-        let intermediate2 = state.intermediate();
+    fn compile(
+        &self,
+        state: &mut crate::TranspilerState<Self::Output>,
+    ) -> Result<Self::Output, Error> {
+        let intermediate1 = state.intermediate().compile(state)?;
+        let intermediate2 = state.intermediate().compile(state)?;
         let (start, end) = (
-            self.start.clone().compile(state),
-            self.end.clone().compile(state),
+            self.start.clone().compile(state)?,
+            self.end.clone().compile(state)?,
         );
+        state.access(self.operand.clone());
         let operand = self.operand.clone();
         let ty = self.ty.clone().unwrap_or(syn::parse_quote!(u32));
         state.to_insert_above.extend([
@@ -104,6 +127,6 @@ impl Compile for FieldExtract {
                 }
             ),
         ]);
-        quote!(#intermediate2)
+        Ok(quote!(#intermediate2))
     }
 }
