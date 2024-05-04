@@ -155,7 +155,8 @@ impl Compile for (Ident, Statement) {
                     ext.push(el.compile(state)?);
                 }
                 let ret = self.0.clone();
-                let declerations: Vec<Ident> = state.to_declare.last_mut().unwrap().drain(..).collect();
+                let declerations: Vec<Ident> =
+                    state.to_declare.last_mut().unwrap().drain(..).collect();
                 let to_insert_above: Vec<TokenStream> = state.to_insert_above.drain(..).collect();
                 let declaration_strings = declerations.iter().map(|el| el.to_string());
                 Ok(quote!(

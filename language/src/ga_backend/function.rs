@@ -97,7 +97,16 @@ impl Compile for LocalAddress {
 
     fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Result<Self::Output, Error> {
         let name = self.name.clone();
-        state.access_str(name.clone().into_token_stream().to_string().strip_prefix("\"").unwrap().strip_suffix("\"").unwrap().to_string());
+        state.access_str(
+            name.clone()
+                .into_token_stream()
+                .to_string()
+                .strip_prefix("\"")
+                .unwrap()
+                .strip_suffix("\"")
+                .unwrap()
+                .to_string(),
+        );
         let bits = self.bits.clone();
 
         Ok(quote!(Operand::AddressInLocal(#name.to_owned(),#bits)))
@@ -109,7 +118,16 @@ impl Compile for Register {
 
     fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Result<Self::Output, Error> {
         let name = self.name.clone();
-        state.access_str(name.clone().into_token_stream().to_string().strip_prefix("\"").unwrap().strip_suffix("\"").unwrap().to_string());
+        state.access_str(
+            name.clone()
+                .into_token_stream()
+                .to_string()
+                .strip_prefix("\"")
+                .unwrap()
+                .strip_suffix("\"")
+                .unwrap()
+                .to_string(),
+        );
         Ok(quote!(Operand::Register(#name.to_owned())))
     }
 }
@@ -119,7 +137,16 @@ impl Compile for Flag {
 
     fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Result<Self::Output, Error> {
         let name = self.name.clone();
-        state.access_str(name.clone().into_token_stream().to_string().strip_prefix("\"").unwrap().strip_suffix("\"").unwrap().to_string());
+        state.access_str(
+            name.clone()
+                .into_token_stream()
+                .to_string()
+                .strip_prefix("\"")
+                .unwrap()
+                .strip_suffix("\"")
+                .unwrap()
+                .to_string(),
+        );
         Ok(quote!(Operand::Flag(#name.to_owned())))
     }
 }

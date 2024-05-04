@@ -86,7 +86,7 @@ impl<T: std::fmt::Debug> TranspilerState<T> {
                 }
             }
         }
-        let counter = self.usage_counter.pop().expect("Invalid stack management"); 
+        let counter = self.usage_counter.pop().expect("Invalid stack management");
         for (key, value) in counter.iter() {
             if *value == 0 {
                 return Err(Error::UnusedDeclartion(key.clone()));
