@@ -63,10 +63,7 @@ impl Parse for ExprOperand {
                     let content;
                     syn::parenthesized!(content in input);
                     let operands = content.parse_terminated(Operand::parse, syn::token::Comma)?;
-                    ops.push((
-                        fident,
-                        operands.into_iter().map(|el| Box::new(el)).collect(),
-                    ));
+                    ops.push((fident, operands.into_iter().map(Box::new).collect()));
                     continue;
                 }
                 return Err(input.error("Expected function arguments"));

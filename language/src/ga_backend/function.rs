@@ -5,11 +5,7 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 
 use crate::{
-    ast::{
-        function::*,
-        operand::{IdentOperand, Operand},
-        operations::BinOp,
-    },
+    ast::{function::*, operand::Operand, operations::BinOp},
     Compile,
     Error,
     TranspilerState,
@@ -101,9 +97,9 @@ impl Compile for LocalAddress {
             name.clone()
                 .into_token_stream()
                 .to_string()
-                .strip_prefix("\"")
+                .strip_prefix('\"')
                 .unwrap()
-                .strip_suffix("\"")
+                .strip_suffix('\"')
                 .unwrap()
                 .to_string(),
         );
@@ -122,9 +118,9 @@ impl Compile for Register {
             name.clone()
                 .into_token_stream()
                 .to_string()
-                .strip_prefix("\"")
+                .strip_prefix('\"')
                 .unwrap()
-                .strip_suffix("\"")
+                .strip_suffix('\"')
                 .unwrap()
                 .to_string(),
         );
@@ -141,9 +137,9 @@ impl Compile for Flag {
             name.clone()
                 .into_token_stream()
                 .to_string()
-                .strip_prefix("\"")
+                .strip_prefix('\"')
                 .unwrap()
-                .strip_suffix("\"")
+                .strip_suffix('\"')
                 .unwrap()
                 .to_string(),
         );

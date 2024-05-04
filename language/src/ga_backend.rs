@@ -11,8 +11,8 @@ use syn::Ident;
 
 use crate::{ast::*, Compile, Error, TranspilerState};
 
-impl Into<Result<TokenStream, Error>> for IR {
-    fn into(self) -> Result<TokenStream, Error> {
+impl From<IR> for Result<TokenStream, Error> {
+    fn from(value: IR) -> Result<TokenStream, Error> {
         // let mut declerations: Vec<TokenStream> = vec![];
         // self.extensions
         //     .iter()
@@ -20,16 +20,16 @@ impl Into<Result<TokenStream, Error>> for IR {
         let mut state = TranspilerState::new();
         state.enter_scope();
 
-        let ret = self.ret.clone().unwrap_or(format_ident!("ret"));
+        let ret = value.ret.clone().unwrap_or(format_ident!("ret"));
         let mut ext = Vec::new();
 
-        for el in self.extensions {
+        for el in value.extensions {
             ext.push((ret.clone(), el).compile(&mut state)?);
         }
         let declerations = state.to_declare()?;
         let declaration_strings = declerations.iter().map(|el| el.to_string());
         state.to_declare()?;
-        Ok(match self.ret {
+        Ok(match value.ret {
             Some(_) => quote!(
                 #(let #declerations =
                   Operand::Local(#declaration_strings.to_owned());)*
@@ -44,8 +44,7 @@ impl Into<Result<TokenStream, Error>> for IR {
                     ret
                 }
             ),
-        }
-        .into())
+        })
     }
 }
 
