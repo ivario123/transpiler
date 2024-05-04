@@ -7,14 +7,14 @@ fn main() {
     let b = Operand::Register("b".to_owned());
     let c = Operand::Local("c".to_owned());
     let cond = false;
-    let ret = pseudo!([
+    let _ret = pseudo!([
         let d = a ^ b;
         // d = a + d;
         if(cond) {
-            // d = a | b;
+            d = a | b;
         }
 
-        // c = d;
+        c = d;
         Jump(c);
     ]);
 }
