@@ -36,10 +36,6 @@ pub fn pseudo(item: TokenStream) -> TokenStream {
         Ok(val) => val,
         Err(e) => panic!("{:?}", e),
     };
-    let ret = input.into();
 
-    // println!("Ret : \n {ret}");
-
-    ret
-
+    input.into()
 }

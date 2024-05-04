@@ -37,12 +37,6 @@ trait Compile {
     fn compile(&self, state: &mut TranspilerState<Self::Output>) -> Result<Self::Output, Error>;
 }
 
-/// Compiles the program will not fail if anny [`Error`] is encountered.
-trait CompileUnchecked {
-    type Output: std::fmt::Debug;
-    fn compile_unchecked(&self, state: &mut TranspilerState<Self::Output>) -> Self::Output;
-}
-
 impl<T: std::fmt::Debug> TranspilerState<T> {
     fn new() -> Self {
         Self {
@@ -71,6 +65,12 @@ impl<T: std::fmt::Debug> TranspilerState<T> {
         }
     }
 
+    // Exception since the naming is resonable in this case.
+    #[allow(clippy::wrong_self_convention)]
+    /// Returns the variables that need to be declared.
+    ///
+    /// If any of the variables that need to be declared after this scope
+    /// have not been used we throw an error.
     pub fn to_declare(&mut self) -> Result<Vec<Ident>, Error> {
         let to_declare = self.to_declare.pop().expect("Invalid stack management");
         for el in to_declare.iter() {
@@ -86,11 +86,17 @@ impl<T: std::fmt::Debug> TranspilerState<T> {
                 }
             }
         }
-        self.usage_counter.pop();
+        let counter = self.usage_counter.pop().expect("Invalid stack management");
+        for (key, value) in counter.iter() {
+            if *value == 0 {
+                return Err(Error::UnusedDeclartion(key.clone()));
+            }
+        }
 
         Ok(to_declare)
     }
 
+    /// Declares a new local variable.
     pub fn declare_local(&mut self, ident: Ident) {
         self.to_declare.last_mut().unwrap().push(ident.clone());
         self.usage_counter
@@ -99,20 +105,26 @@ impl<T: std::fmt::Debug> TranspilerState<T> {
             .insert(ident.to_string(), 0);
     }
 
+    /// Accesses the variable by identifier.
     pub fn access(&mut self, ident: Ident) {
         let key = ident.to_string();
         self.increment_access(&key)
     }
 
+    /// Accesses a variable by string.
     pub fn access_str(&mut self, ident: String) {
         self.increment_access(&ident)
     }
 
+    /// Enters a new block.
+    ///
+    /// This creates a new nested set of local variables.
     pub fn enter_scope(&mut self) {
         self.to_declare.push(Vec::new());
         self.usage_counter.push(HashMap::new());
     }
 
+    /// Declares a new intermediate variable.
     pub fn intermediate(&mut self) -> ast::operand::IdentOperand {
         let new_ident = format_ident!("intermediate_{}", self.intermediate_counter);
         self.to_declare

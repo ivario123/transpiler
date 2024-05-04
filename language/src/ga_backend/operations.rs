@@ -3,7 +3,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::{ast::operations::*, Compile, CompileUnchecked, Error};
+use crate::{ast::operations::*, Compile, Error};
 
 impl Compile for Assign {
     type Output = TokenStream;

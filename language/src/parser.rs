@@ -26,7 +26,7 @@ impl IR {
                     input.advance_to(&speculative);
 
                     let token: Ident = input.parse()?;
-                    if token.to_string() != "extend".to_owned() {
+                    if token.to_string().as_str() != "extend" {
                         return Err(input.error("Exptected extend"));
                     }
                     Some(ret)
@@ -77,7 +77,7 @@ impl Parse for Statement {
             let content;
             syn::braced!(content in input);
 
-            let mut happy_case = Box::new(vec![]);
+            let mut happy_case: Box<Vec<Statement>> = Box::default();
             while !content.is_empty() {
                 let further_values: Statement = content.parse()?;
                 happy_case.push(further_values);
@@ -86,7 +86,7 @@ impl Parse for Statement {
                 let _: Token![else] = input.parse()?;
                 let content;
                 syn::braced!(content in input);
-                let mut sad_case = Box::new(vec![]);
+                let mut sad_case: Box<Vec<Statement>> = Box::default();
                 while !content.is_empty() {
                     let further_values: Statement = content.parse()?;
                     sad_case.push(further_values);
@@ -104,7 +104,7 @@ impl Parse for Statement {
             let e: Expr = input.parse()?;
             let content;
             syn::braced!(content in input);
-            let mut block = Box::new(vec![]);
+            let mut block: Box<Vec<Statement>> = Box::default();
             while !content.is_empty() {
                 let further_values: Statement = content.parse()?;
                 block.push(further_values);
@@ -129,7 +129,7 @@ impl Parse for Statement {
                     ret.push(Box::new(val));
                 }
                 Err(e) => {
-                    if ret.len() != 0 {
+                    if ret.is_empty() {
                         break;
                     }
                     return Err(e);
