@@ -8,7 +8,7 @@ pub trait LocalInto<T> {
 
 impl LocalInto<Operand>  for u32 {
     fn local_into(self) -> Operand{
-        Operand::Immidiate(DataWord::Word32(self))
+        Operand::Immediate(DataWord::Word32(self))
     }
 }
 

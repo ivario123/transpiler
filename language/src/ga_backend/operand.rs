@@ -106,7 +106,7 @@ impl Compile for FieldExtract {
                 Operation::Srl {
                     destination: #intermediate1.clone(),
                     operand: #operand.clone(),
-                    shift: Operand::Immidiate((#start as #ty).into())
+                    shift: Operand::Immediate((#start as #ty).into())
                 }
             ),
             quote!(
@@ -114,7 +114,7 @@ impl Compile for FieldExtract {
                 Operation::And {
                     destination: #intermediate2.clone(),
                     operand1: #intermediate1.clone(),
-                    operand2: Operand::Immidiate(
+                    operand2: Operand::Immediate(
                         (
                             (
                                 (
